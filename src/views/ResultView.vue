@@ -108,7 +108,6 @@
 
     <footer class="my-footer">
       <span>目前有 {{ submissions.length.toLocaleString() }} 人參與</span>
-      <span v-if="!isRemote" title="沒設定 Supabase，只看得到這台瀏覽器的資料">（本機模式）</span>
     </footer>
 
     <div v-if="loading" class="my-overlay">載入中…</div>
@@ -122,7 +121,7 @@
   import * as d3 from 'd3';
   import TaiwanMap from '../components/TaiwanMap.vue';
   import { PLANTS, distanceKm, formatKm } from '../config/plants.js';
-  import { fetchSubmissions, getUserId, isRemote } from '../config/api.js';
+  import { fetchSubmissions, getCookieId, getLocalAnswer } from '../config/api.js';
 
   const router = useRouter();
   const submissions = ref([]);
@@ -130,7 +129,9 @@
   const error = ref('');
   const selected = ref(null);
 
-  const mine = computed(() => submissions.value.find((s) => s.userId === getUserId()) ?? null);
+  // 你的點用這台裝置最新一次作答（第一次之後的改動只存在 localStorage）；沒有的話用你上傳的那筆
+  const myUpload = computed(() => submissions.value.find((s) => s.cookieId === getCookieId()) ?? null);
+  const mine = computed(() => getLocalAnswer() ?? myUpload.value);
 
   const visiblePlants = computed(() => (selected.value === null ? PLANTS : PLANTS.filter((p) => p.id === selected.value)));
 
@@ -165,7 +166,7 @@
   const myRank = computed(() => {
     if (!mine.value || submissions.value.length < 2) return null;
     const my = totalKm(mine.value);
-    const others = submissions.value.filter((s) => s !== mine.value);
+    const others = submissions.value.filter((s) => s !== myUpload.value);
     return Math.round((others.filter((s) => totalKm(s) > my).length / others.length) * 100);
   });
 

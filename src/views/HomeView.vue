@@ -89,7 +89,8 @@
         <template v-else>
           <div class="my-muted">
             <template v-if="saveState === 'saving'">上傳中…</template>
-            <template v-else-if="saveState === 'saved'">已送出 ✓</template>
+            <template v-else-if="saveState === 'uploaded'">已送出 ✓</template>
+            <template v-else-if="saveState === 'local'">你已經送出過了，這次的結果只存在這台裝置</template>
             <template v-else-if="saveState === 'error'">
               上傳失敗：{{ saveError }}
               <button class="my-button" type="button" @click="save">重試</button>
@@ -108,7 +109,6 @@
 
     <footer class="my-footer">
       <span>台灣四座核電廠，你知道在哪裡嗎？</span>
-      <span v-if="!isRemote">（本機模式）</span>
     </footer>
   </div>
 </template>
@@ -118,7 +118,7 @@
   import { useRouter } from 'vue-router';
   import TaiwanMap from '../components/TaiwanMap.vue';
   import { PLANTS, distanceKm, formatKm } from '../config/plants.js';
-  import { saveSubmission, hasSubmitted, isRemote } from '../config/api.js';
+  import { submitAnswer, hasSubmitted } from '../config/api.js';
 
   // 核一、核二、核四 都在北海岸，標籤錯開避免重疊
   const ACTUAL_LABEL_OFFSET = [
@@ -164,8 +164,7 @@
   const save = async () => {
     saveState.value = 'saving';
     try {
-      await saveSubmission(guesses.value);
-      saveState.value = 'saved';
+      saveState.value = await submitAnswer(guesses.value);
       submittedBefore.value = true;
     } catch (e) {
       saveError.value = e.message;
