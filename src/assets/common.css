@@ -1,0 +1,198 @@
+:root {
+  --my-font-family-primary: 'Noto Sans TC', sans-serif;
+  --my-font-size-sm: 0.875rem;
+  --my-font-size-lg: 2rem;
+  --my-letter-spacing: 1px;
+
+  --my-color-land: #f7f7f5;
+  --my-color-light-gray: #7d7d7d;
+  --my-color-dark-gray: #393939;
+  --my-color-background-gray: #dedede;
+  --my-color-highlight-gray: #c8c8c8;
+  --my-color-yellow: hsl(48, 100%, 50%);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--my-font-family-primary);
+  font-size: var(--my-font-size-sm);
+  letter-spacing: var(--my-letter-spacing);
+  color: var(--my-color-dark-gray);
+  background-color: var(--my-color-background-gray);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 版面：標題 / 地圖＋側欄 / 頁尾 */
+.my-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.my-header {
+  padding: 16px 0 8px;
+}
+.my-title {
+  margin: 0;
+  font-size: var(--my-font-size-lg);
+  font-weight: 100;
+  color: var(--my-color-light-gray);
+}
+.my-subtitle {
+  margin-top: 8px;
+  min-height: 1.5em;
+}
+.my-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 16px;
+}
+.my-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.my-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0 12px;
+  color: var(--my-color-light-gray);
+}
+
+@media (max-width: 767px) {
+  .my-title {
+    font-size: 1.5rem;
+  }
+  .my-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    gap: 8px;
+  }
+  .my-panel {
+    justify-content: flex-start;
+    max-height: 38dvh;
+  }
+}
+
+/* 按鈕 */
+.my-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.my-button {
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--my-color-dark-gray);
+  background-color: var(--my-color-land);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.my-button:hover:not(:disabled),
+.my-button.active {
+  background-color: var(--my-color-highlight-gray);
+}
+.my-button.primary {
+  color: #fff;
+  background-color: var(--my-color-dark-gray);
+}
+.my-button.primary:hover:not(:disabled) {
+  background-color: #000;
+}
+.my-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 核電廠列表 */
+.my-plant-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.my-plant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.my-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.my-muted {
+  color: var(--my-color-light-gray);
+}
+.my-num {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* SVG 標記 */
+.my-marker-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.my-map-text {
+  font-size: 12px;
+  paint-order: stroke;
+  stroke: var(--my-color-land);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.my-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(222, 222, 222, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+@keyframes my-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.my-fade-in {
+  animation: my-fade-in 0.5s ease-out both;
+}
