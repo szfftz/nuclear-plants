@@ -262,7 +262,6 @@
     flex-wrap: nowrap;
   }
   .filter .my-button {
-    border-radius: 999px;
     flex: 1 1 0;
     min-width: 0;
     padding-left: 4px;

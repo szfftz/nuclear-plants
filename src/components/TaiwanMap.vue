@@ -220,7 +220,7 @@
     height: 40px;
     padding: 0 8px;
     border: none;
-    border-radius: 8px;
+    border-radius: 999px;
     background-color: var(--my-color-land);
     color: var(--my-color-dark-gray);
     font: inherit;
