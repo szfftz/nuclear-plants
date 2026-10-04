@@ -112,6 +112,7 @@
   import { PLANTS, plantPosition } from '../config/plants.js';
   import { distanceKm, formatKm, lineAttrs, midpoint } from '../lib/geo.js';
   import { submitAnswer, hasSubmitted, checkUploaded, fetchMyAnswer, fetchParticipantCount } from '../services/answers.js';
+  import { trackEvent } from '../lib/analytics.js';
 
   const router = useRouter();
   const guesses = ref([]);
@@ -179,6 +180,7 @@
     try {
       saveState.value = await submitAnswer(guesses.value);
       submittedBefore.value = true; // uploaded 或 local 都代表資料庫裡已經有了
+      trackEvent('submit_answer', { result: saveState.value, average_km: Math.round(averageKm.value) });
       if (saveState.value === 'uploaded') loadParticipants();
     } catch (e) {
       saveError.value = e.message;
@@ -187,6 +189,7 @@
   };
 
   const confirm = () => {
+    trackEvent('confirm_answer', { average_km: Math.round(averageKm.value) });
     revealed.value = true;
     save();
   };
