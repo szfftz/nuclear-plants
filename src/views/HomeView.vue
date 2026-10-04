@@ -45,19 +45,20 @@
     </aside>
 
     <main class="my-map">
-      <!-- 地圖正中央的浮水印：所有提示都在這裡；點核一～核四時都附上「地圖可縮放位移」 -->
-      <div class="map-hint" aria-live="polite">
-        <div v-if="revealed">平均差了 {{ formatKm(averageKm) }} 公里</div>
-        <div v-else-if="nextPlant">
-          在地圖上點出 <span :style="{ color: nextPlant.color }">{{ nextPlant.label }}</span> 的位置
-        </div>
-        <template v-else>
-          <div>四個點都放好了</div>
-          <div class="map-hint-sub">可以拖曳調整位置</div>
-        </template>
-        <div v-if="!revealed && nextPlant" class="map-hint-sub">地圖可縮放位移</div>
-      </div>
       <TaiwanMap @pick="addGuess">
+        <!-- 地圖正中央的浮水印（在陸地上、點和標籤下）：所有提示都在這裡；點核一～核四時都附上「地圖可縮放位移」 -->
+        <template #watermark="{ center }">
+          <text class="map-hint" :x="center[0]" :y="center[1]" aria-live="polite">
+            <template v-if="revealed">平均差了 {{ formatKm(averageKm) }} 公里</template>
+            <template v-else-if="nextPlant">
+              在地圖上點出 <tspan :fill="nextPlant.color">{{ nextPlant.label }}</tspan> 的位置
+            </template>
+            <template v-else>四個點都放好了</template>
+            <tspan v-if="!revealed" class="map-hint-sub" :x="center[0]" dy="1.8em">
+              {{ nextPlant ? '地圖可縮放位移' : '可以拖曳調整位置' }}
+            </tspan>
+          </text>
+        </template>
         <template #default="{ project, invert }">
           <!-- 揭曉：猜測 → 實際的連線與距離 -->
           <g v-if="revealed" class="my-fade-in">
@@ -205,25 +206,18 @@
 </script>
 
 <style scoped>
-  /* 浮水印：大字、半透明，不擋點擊 */
+  /* 浮水印：大字、半透明（SVG 文字），不擋點擊 */
   .map-hint {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2;
-    text-align: center;
     font-size: 2.5rem;
     font-weight: 700;
     letter-spacing: 0.1em;
-    color: var(--my-color-dark-gray);
+    fill: var(--my-color-dark-gray);
     opacity: 0.25;
-    white-space: nowrap;
-    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: central;
     user-select: none;
   }
   .map-hint-sub {
-    margin-top: 8px;
     font-size: 0.6em;
   }
   @media (max-width: 1023px) {
