@@ -12,19 +12,15 @@
             <strong class="my-prompt-plant" :style="{ color: nextPlant.color }">{{ nextPlant.label }}</strong>
             的位置
           </template>
-          <template v-else>
-            四個點都放好了
-            <span class="my-prompt-note">可以拖曳微調，再按「確定」</span>
-          </template>
+          <template v-else>四個點都放好了</template>
         </div>
         <ul class="my-plant-list">
           <li v-for="(p, i) in PLANTS" :key="p.id" class="my-plant-row" :class="{ 'my-muted': !revealed && i > guesses.length }">
-            <span class="my-dot" :style="{ background: p.color }"></span>
-            <span>{{ p.label }}</span>
+            <span class="my-plant-name" :class="{ 'my-now': !revealed && i === guesses.length }">
+              <span class="my-dot" :style="{ background: p.color }"></span>{{ p.label }}
+            </span>
             <span class="my-num">
               <template v-if="revealed">差 {{ formatKm(results[i].km) }} km</template>
-              <template v-else-if="i < guesses.length">已放</template>
-              <span v-else-if="i === guesses.length" class="my-now"><span class="my-icon" aria-hidden="true">arrow_back</span>現在</span>
             </span>
           </li>
         </ul>
@@ -40,7 +36,7 @@
             <button class="my-button" type="button" @click="save">重試</button>
           </template>
         </div>
-        <!-- 不論是否揭曉都可以重設、確定；送出過才有「看結果」 -->
+        <!-- 不論是否揭曉都可以重設、確定；「看結果」一直顯示，送出過才能按 -->
         <div class="my-buttons">
           <button class="my-button" type="button" :disabled="!guesses.length" @click="reset">重設</button>
           <button
@@ -51,7 +47,7 @@
           >
             確定
           </button>
-          <button v-if="submittedBefore" class="my-button" type="button" @click="router.push('/result')">看結果</button>
+          <button class="my-button" type="button" :disabled="!submittedBefore" @click="router.push('/result')">看結果</button>
         </div>
         <div v-if="participants !== null" class="my-muted participants">目前有 {{ participants.toLocaleString() }} 人參與</div>
       </div>

@@ -96,11 +96,6 @@ body {
 .my-prompt-plant {
   font-size: 1.25em;
 }
-.my-prompt-note {
-  flex-basis: 100%;
-  font-size: 1.1rem;
-  color: var(--my-color-light-gray);
-}
 
 /* 版面：左欄（標題＋控制）＋右邊地圖區；台灣底圖鋪滿整個畫面、在最底層
    手機直式：上方標題、中間地圖、下方按鈕 */
@@ -139,7 +134,9 @@ body {
   gap: 24px;
   min-height: 0;
   overflow-y: auto;
-  padding: 32px 0 max(16px, env(safe-area-inset-bottom));
+  padding: 32px 0 max(16px, env(safe-area-inset-bottom)) 8px;
+  /* 往左多留 8px，讓黃底等突出的元素不會被捲動區裁掉；內容位置不變 */
+  margin-left: -8px;
 }
 /* 地圖區只是佔位（全台視角放這裡）；不要設 z-index，底圖才會在左欄下面 */
 .my-map {
@@ -252,7 +249,7 @@ body {
   }
   .my-side {
     gap: 10px;
-    padding: 10px 0;
+    padding: 10px 0 10px 8px;
     font-size: 0.875rem;
   }
   .my-map {
@@ -264,9 +261,6 @@ body {
   .my-prompt {
     margin-top: 4px;
     font-size: 1.15rem;
-  }
-  .my-prompt-note {
-    font-size: 0.875rem;
   }
   .my-panel {
     gap: 8px;
@@ -310,19 +304,24 @@ body {
   cursor: not-allowed;
 }
 
-/* 核電廠清單：圓點｜名稱｜狀態 三欄對齊，狀態緊接在名稱後面 */
+/* 核電廠清單：（圓點＋名稱）｜狀態 兩欄對齊，狀態緊接在名稱後面 */
 .my-plant-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 12px max-content max-content;
+  grid-template-columns: max-content max-content;
   align-items: center;
   column-gap: 8px;
   row-gap: 6px;
 }
 .my-plant-row {
   display: contents;
+}
+.my-plant-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 .my-prompt + .my-plant-list {
   margin-top: 12px;
@@ -345,19 +344,14 @@ body {
     margin-left: 0;
   }
 }
-/* 「← 現在」：黃底標籤，一眼看得到輪到哪一座 */
+/* 輪到的那一座：圓點＋名稱包在黃底圓角裡，一眼看得到（負邊距讓各列圓點仍對齊） */
 .my-now {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 8px 1px 4px;
+  margin: 0 -8px;
+  padding: 1px 10px 1px 8px;
   border-radius: 999px;
   background-color: var(--my-color-yellow);
   color: var(--my-color-dark-gray);
   font-weight: 700;
-}
-.my-now .my-icon {
-  margin: 0 2px 0 0;
-  vertical-align: 0;
 }
 .my-dot {
   flex: none;
@@ -368,7 +362,7 @@ body {
 .my-muted {
   color: var(--my-color-light-gray);
 }
-/* 狀態（已放／現在／差幾公里）緊接在名稱後面，不要推到最右邊 */
+/* 揭曉後的「差幾公里」緊接在名稱後面，不要推到最右邊 */
 .my-num {
   margin-left: 4px;
   color: var(--my-color-light-gray);
