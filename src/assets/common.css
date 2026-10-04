@@ -79,20 +79,6 @@ body {
 .my-nowrap {
   display: inline-block;
 }
-/* 作答提示：要一眼看得到 */
-.my-prompt {
-  margin-top: 10px;
-  min-height: 1.6em;
-  font-size: 1.5rem;
-  line-height: 1.4;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 0.35em;
-}
-.my-prompt strong {
-  font-weight: 700;
-}
 
 /* 版面：左欄（標題＋控制）＋右邊地圖區；台灣底圖鋪滿整個畫面、在最底層
    手機直式：上方標題、中間地圖、下方按鈕 */
@@ -157,9 +143,6 @@ body {
   .my-title {
     font-size: 2rem;
   }
-  .my-prompt {
-    font-size: 1.25rem;
-  }
 }
 
 /* 手機（直式、橫式）：按鈕平分寬度 */
@@ -222,10 +205,6 @@ body {
   .my-title {
     font-size: 1.5rem;
   }
-  .my-prompt {
-    margin-top: 6px;
-    font-size: 1.4rem;
-  }
   .my-panel {
     gap: 8px;
   }
@@ -254,10 +233,6 @@ body {
   }
   .my-title {
     font-size: 1.25rem;
-  }
-  .my-prompt {
-    margin-top: 4px;
-    font-size: 1.15rem;
   }
   .my-panel {
     gap: 8px;
@@ -337,11 +312,10 @@ body {
 .my-plant-list .my-num {
   font-size: 0.8rem;
 }
-.my-title + .my-plant-list,
-.my-prompt + .my-plant-list {
+.my-title + .my-plant-list {
   margin-top: 12px;
 }
-/* 手機直式：標題、提示、核一～核四都置中 */
+/* 手機直式：標題、核一～核四都置中 */
 @media (max-width: 767px) {
   .my-header .my-plant-list {
     margin-top: 10px;
@@ -349,9 +323,6 @@ body {
   }
   .my-header .my-title {
     text-align: center;
-  }
-  .my-header .my-prompt {
-    justify-content: center;
   }
 }
 /* 手機橫式：左欄窄，公里數縮小才放得下 */

@@ -3,10 +3,6 @@
     <aside class="my-side">
       <header class="my-header">
         <h1 class="my-title"><span class="my-nowrap">台灣四座核電廠，</span><span class="my-nowrap">你知道在哪裡嗎？</span></h1>
-        <!-- 作答中的提示都在地圖中央（浮水印）；這裡只在揭曉後顯示平均差距 -->
-        <div v-if="revealed" class="my-prompt" aria-live="polite">
-          平均差了 <strong>{{ formatKm(averageKm) }}</strong> 公里
-        </div>
         <ul class="my-plant-list">
           <li v-for="(p, i) in PLANTS" :key="p.id" class="my-plant-row" :class="{ 'my-muted': !revealed && i > guesses.length }">
             <span class="my-plant-pill" :class="{ 'my-now': !revealed && i === guesses.length }" :style="{ background: p.color }">
@@ -47,12 +43,16 @@
     </aside>
 
     <main class="my-map">
-      <!-- 地圖正中央的浮水印：作答中提示要點哪一座（還沒放點時再提示可縮放位移）；四點放好後提示可以確定 -->
-      <div v-if="!revealed" class="map-hint" aria-live="polite">
-        <div v-if="nextPlant">
+      <!-- 地圖正中央的浮水印：所有提示都在這裡 -->
+      <div class="map-hint" aria-live="polite">
+        <div v-if="revealed">平均差了 {{ formatKm(averageKm) }} 公里</div>
+        <div v-else-if="nextPlant">
           在地圖上點出 <span :style="{ color: nextPlant.color }">{{ nextPlant.label }}</span> 的位置
         </div>
-        <div v-else>四個點都放好了</div>
+        <template v-else>
+          <div>四個點都放好了</div>
+          <div class="map-hint-sub">可以拖曳調整位置</div>
+        </template>
         <div v-if="!guesses.length" class="map-hint-sub">地圖可縮放位移</div>
       </div>
       <TaiwanMap @pick="addGuess">
