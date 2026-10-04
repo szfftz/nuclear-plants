@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100">
+  <circle r="48" fill="#FFD600" stroke="#1A1A1A" stroke-width="4"/>
+  <circle r="6" fill="#1A1A1A"/>
+  <g fill="#1A1A1A">
+    <path id="blade" d="M4.5 7.794L19 32.909A38 38 0 0 1-19 32.909L-4.5 7.794A9 9 0 0 0 4.5 7.794Z"/>
+    <use href="#blade" transform="rotate(120)"/>
+    <use href="#blade" transform="rotate(240)"/>
+  </g>
+</svg>
