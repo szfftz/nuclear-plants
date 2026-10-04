@@ -63,7 +63,7 @@
               type="button"
               @click="selected = p.id"
             >
-              {{ p.label }}
+              <span class="my-dot filter-dot" :style="{ background: p.color }"></span>{{ p.label }}
             </button>
           </div>
           <div class="my-buttons">
@@ -267,6 +267,14 @@
     min-width: 0;
     padding-left: 4px;
     padding-right: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .filter-dot {
+    width: 10px;
+    height: 10px;
   }
 
   /* 回到前頁：純文字連結樣式，不要按鈕外框 */
