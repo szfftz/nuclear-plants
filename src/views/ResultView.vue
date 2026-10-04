@@ -178,9 +178,9 @@
   .my-title {
     margin-bottom: 4px;
   }
-  /* 標題上方留 pt-5（3rem） */
+  /* 標題上方留 pt-4（1.5rem） */
   .back-link + .my-title {
-    padding-top: 3rem;
+    padding-top: 1.5rem;
     margin-top: -16px;
   }
 

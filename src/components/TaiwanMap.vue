@@ -1,5 +1,5 @@
 <!--
-  台灣底圖：鋪滿整個畫面（position: fixed），可縮放、拖曳平移。
+  台灣底圖：鋪滿整個畫面（position: fixed），像 Google 地圖一樣可縮放、拖曳位移。
   元件本身放在版面的地圖區（佔位用）：全台視角會放進這個區域，左下角（台灣西南方）有「放大／縮小／顯示全台」按鈕。
   圖層透過 scoped slot 畫在同一個 <svg> 裡：
     project([lon, lat]) -> [x, y]   已套用縮放，標記大小不會跟著變
@@ -27,7 +27,7 @@
       <button type="button" class="zoom-button" aria-label="放大" :disabled="transform.k >= MAX_ZOOM" @click="zoomBy(1.6)">
         <span class="my-icon" aria-hidden="true">add</span>
       </button>
-      <button type="button" class="zoom-button" aria-label="縮小" :disabled="isFullView" @click="zoomBy(1 / 1.6)">
+      <button type="button" class="zoom-button" aria-label="縮小" :disabled="transform.k <= 1.001" @click="zoomBy(1 / 1.6)">
         <span class="my-icon" aria-hidden="true">remove</span>
       </button>
       <button type="button" class="zoom-button zoom-reset" :disabled="isFullView" @click="resetZoom">
@@ -106,31 +106,19 @@
       transform.value = event.transform;
     });
 
-  // 限制範圍：地圖區中心必須在台灣陸地上（容許離岸 COAST_BUFFER px），超出就停在上一個合法位置；
-  // 縮到 1 倍時固定顯示全台。這樣怎麼拖，畫面上都看得到台灣。
-  const COAST_BUFFER = 24;
-  let lastValid = d3.zoomIdentity;
-
+  // 像 Google 地圖：任何倍率都能拖曳位移；地圖區中心最多只能到台灣外框（含澎湖、蘭嶼），到邊界平順停住
   const boxCenter = () => [(box.value.x0 + box.value.x1) / 2, (box.value.y0 + box.value.y1) / 2];
-
-  const nearLand = ([x, y]) => {
-    for (let r = 0; r <= COAST_BUFFER; r += COAST_BUFFER / 2) {
-      const steps = r === 0 ? 1 : 8;
-      for (let i = 0; i < steps; i++) {
-        const a = (i / steps) * 2 * Math.PI;
-        if (d3.geoContains(land.value, projection.value.invert([x + r * Math.cos(a), y + r * Math.sin(a)]))) return true;
-      }
-    }
-    return false;
-  };
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
   zoom.constrain((t) => {
-    if (t.k <= 1.001) return (lastValid = d3.zoomIdentity);
+    if (!projection.value) return t;
+    const [[lx0, ly0], [lx1, ly1]] = d3.geoPath(projection.value).bounds(land.value);
     const [mx, my] = boxCenter();
-    if (nearLand(t.invert([mx, my]))) return (lastValid = t);
-    // 中心跑到海上：改用上一個合法中心，只套用新的縮放倍率
-    const [cx, cy] = lastValid.invert([mx, my]);
-    return (lastValid = d3.zoomIdentity.translate(mx - t.k * cx, my - t.k * cy).scale(t.k));
+    const [cx, cy] = t.invert([mx, my]);
+    const nx = clamp(cx, lx0, lx1);
+    const ny = clamp(cy, ly0, ly1);
+    if (nx === cx && ny === cy) return t;
+    return d3.zoomIdentity.translate(mx - t.k * nx, my - t.k * ny).scale(t.k);
   });
 
   // 按鈕縮放以地圖區中心為準
@@ -168,7 +156,6 @@
   watch(box, () => {
     if (!svg.value) return;
     updateExtent();
-    lastValid = d3.zoomIdentity;
     d3.select(svg.value).call(zoom.transform, d3.zoomIdentity);
   });
 
@@ -208,9 +195,6 @@
   }
   .map-svg:active {
     cursor: grabbing;
-  }
-  .map-svg.pickable {
-    cursor: crosshair;
   }
   .land {
     fill: var(--my-color-land);
