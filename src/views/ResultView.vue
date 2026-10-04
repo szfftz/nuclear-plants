@@ -68,7 +68,7 @@
             </button>
           </div>
           <div class="my-buttons">
-            <button class="my-button" :class="{ active: selected === null }" type="button" @click="selected = null">
+            <button class="my-button filter-all" :class="{ active: selected === null }" type="button" @click="selected = null">
               全部
             </button>
           </div>
@@ -278,13 +278,22 @@
     color: #fff;
     font-weight: 700;
   }
-  /* 選到的核一～核四：外框變黃色（跟作答頁「輪到」一樣）；「全部」維持白底、不加黃框 */
-  .filter .filter-plant.active {
-    box-shadow: inset 0 0 0 3px var(--my-color-yellow);
+  /* 沒選到的按鈕變淡（滑過時稍微變清楚） */
+  .filter .my-button:not(.active) {
+    opacity: 0.45;
   }
-  .filter .my-button.active:not(.filter-plant),
-  .filter .my-button.active:not(.filter-plant):hover {
-    background-color: var(--my-color-land);
+  .filter .my-button:not(.active):hover {
+    opacity: 0.75;
+  }
+  /* 選到的按鈕：白色外框（跟地圖上的標籤一樣） */
+  .filter .my-button.active {
+    box-shadow: inset 0 0 0 3px #fff;
+  }
+  /* 「全部」：黑底白字 */
+  .filter .filter-all,
+  .filter .filter-all:hover:not(:disabled) {
+    background-color: var(--my-color-dark-gray);
+    color: #fff;
   }
 
   /* 回到前頁：純文字連結樣式，不要按鈕外框 */

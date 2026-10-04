@@ -216,14 +216,15 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    min-width: 40px;
-    height: 40px;
-    padding: 0 8px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 7px;
     border: none;
-    border-radius: 999px;
+    border-radius: 6px;
     background-color: var(--my-color-land);
     color: var(--my-color-dark-gray);
     font: inherit;
+    font-size: 0.875rem;
     letter-spacing: inherit;
     cursor: pointer;
     touch-action: manipulation;
@@ -241,7 +242,7 @@
     cursor: default;
   }
   .zoom-reset {
-    padding: 0 12px 0 8px;
+    padding: 0 10px 0 7px;
   }
   .zoom-note {
     padding: 2px 2px 0;
