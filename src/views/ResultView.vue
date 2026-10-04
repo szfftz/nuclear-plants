@@ -1,114 +1,122 @@
 <template>
-  <div class="my-page">
-    <header class="my-header">
-      <h1 class="my-title">大家點的位置</h1>
-      <div class="my-subtitle">
-        小點是每個人放的位置，<span class="legend-diamond">◆</span> 是實際位置，<span class="legend-ring">◎</span>
-        是大家的平均位置<template v-if="mine">，<span class="legend-mine">●</span> 是你放的</template>
-      </div>
-    </header>
+  <div class="my-page my-layout">
+    <!-- 左欄：標題、圖層開關、篩選，垂直排列（手機：上方標題區＋下方按鈕） -->
+    <aside class="my-side">
+      <header class="my-header">
+        <h1 class="my-title">大家點的位置</h1>
 
-    <main class="my-body">
+        <ul class="legend">
+          <li v-for="layer in layers" :key="layer.key">
+            <button
+              type="button"
+              :class="{ off: !show[layer.key] }"
+              :aria-pressed="show[layer.key]"
+              @click="show[layer.key] = !show[layer.key]"
+            >
+              <svg width="28" height="24" viewBox="-14 -12 28 24" aria-hidden="true">
+                <template v-if="layer.key === 'crowd'">
+                  <circle
+                    v-for="(p, k) in PLANTS"
+                    :key="p.id"
+                    :cx="[-7, 7, -7, 7][k]"
+                    :cy="[-4, -4, 4, 4][k]"
+                    r="3.5"
+                    :fill="p.color"
+                    fill-opacity="0.6"
+                    stroke="#fff"
+                    stroke-width="1"
+                  />
+                </template>
+                <NuclearMarker v-else-if="layer.key === 'actual'" color="var(--my-color-dark-gray)" :r="10" />
+                <rect
+                  v-else
+                  class="my-badge"
+                  x="-12"
+                  y="-8"
+                  width="24"
+                  height="16"
+                  rx="8"
+                  fill="var(--my-color-dark-gray)"
+                  stroke="var(--my-color-yellow)"
+                  stroke-width="2.5"
+                />
+              </svg>
+              <span>{{ layer.label }}</span>
+              <span class="my-icon my-icon-fill legend-switch" aria-hidden="true">{{ show[layer.key] ? 'toggle_on' : 'toggle_off' }}</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="filter">
+          <div class="my-buttons">
+            <button class="my-button" :class="{ active: selected === null }" type="button" @click="selected = null">
+              全部
+            </button>
+          </div>
+          <div class="my-buttons">
+            <button
+              v-for="p in PLANTS"
+              :key="p.id"
+              class="my-button"
+              :class="{ active: selected === p.id }"
+              type="button"
+              @click="selected = p.id"
+            >
+              {{ p.label }}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="my-side-panel side-foot">
+        <button class="my-button primary" type="button" @click="router.push('/')">
+          {{ mine ? '再玩一次' : '我也要玩' }}
+        </button>
+        <span v-if="!loading" class="my-muted">目前有 {{ submissions.length.toLocaleString() }} 人參與</span>
+      </div>
+    </aside>
+
+    <main class="my-map">
       <TaiwanMap>
         <template #default="{ project }">
           <!-- 所有人的點 -->
-          <g class="crowd">
+          <g v-if="show.crowd">
             <template v-for="plant in visiblePlants" :key="`crowd-${plant.id}`">
               <circle
                 v-for="(s, k) in submissions"
                 :key="k"
                 :transform="`translate(${project(s.guesses[plant.id - 1])})`"
-                r="3"
+                r="5"
                 :fill="plant.color"
-                fill-opacity="0.35"
+                fill-opacity="0.6"
+                stroke="#fff"
+                stroke-width="1"
               />
             </template>
           </g>
 
-          <!-- 大家的平均位置 → 實際位置 -->
-          <g v-for="st in visibleStats" :key="`mean-${st.plant.id}`">
-            <line
-              v-if="st.mean"
-              v-bind="lineAttrs(project(st.mean), project(st.actual))"
-              :stroke="st.plant.color"
-              stroke-width="1.5"
-              stroke-dasharray="4 3"
-            />
-            <circle
-              v-if="st.mean"
-              :transform="`translate(${project(st.mean)})`"
-              r="7"
-              fill="none"
-              :stroke="st.plant.color"
-              stroke-width="2.5"
-            />
-          </g>
-
-          <!-- 你的點 -->
-          <g v-if="mine">
-            <g v-for="plant in visiblePlants" :key="`mine-${plant.id}`" :transform="`translate(${project(mine.guesses[plant.id - 1])})`">
-              <circle r="9" :fill="plant.color" stroke="var(--my-color-yellow)" stroke-width="3" />
-              <text class="my-marker-label">{{ plant.id }}</text>
+          <!-- 你放的位置 -->
+          <g v-if="mine && show.mine">
+            <g
+              v-for="plant in visiblePlants"
+              :key="`mine-${plant.id}`"
+              class="my-badge"
+              :transform="`translate(${project(mine.guesses[plant.id - 1])})`"
+            >
+              <rect x="-22" y="-13" width="44" height="26" rx="13" :fill="plant.color" stroke="var(--my-color-yellow)" stroke-width="3" />
+              <text class="my-marker-label">{{ plant.label }}</text>
             </g>
           </g>
 
           <!-- 實際位置 -->
-          <g v-for="st in visibleStats" :key="`actual-${st.plant.id}`" :transform="`translate(${project(st.actual)})`">
-            <rect x="-6" y="-6" width="12" height="12" transform="rotate(45)" :fill="st.plant.color" stroke="#fff" stroke-width="1.5" />
+          <g v-if="show.actual">
+            <g v-for="plant in visiblePlants" :key="`actual-${plant.id}`" :transform="`translate(${project([plant.lon, plant.lat])})`">
+              <NuclearMarker :color="plant.color" :r="12" />
+            </g>
           </g>
         </template>
       </TaiwanMap>
-
-      <aside class="my-panel">
-        <div class="my-buttons">
-          <button class="my-button" :class="{ active: selected === null }" type="button" @click="selected = null">全部</button>
-          <button
-            v-for="p in PLANTS"
-            :key="p.id"
-            class="my-button"
-            :class="{ active: selected === p.id }"
-            type="button"
-            @click="selected = p.id"
-          >
-            {{ p.label }}
-          </button>
-        </div>
-
-        <table class="stats">
-          <thead>
-            <tr>
-              <th></th>
-              <th>平均差</th>
-              <th>中位數</th>
-              <th v-if="mine">你</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="st in stats" :key="st.plant.id" :class="{ 'my-muted': selected !== null && selected !== st.plant.id }">
-              <td>
-                <span class="my-dot" :style="{ background: st.plant.color }"></span>
-                {{ st.plant.label }} {{ st.plant.name }}
-              </td>
-              <td class="my-num">{{ st.n ? formatKm(st.meanKm) : '–' }}</td>
-              <td class="my-num">{{ st.n ? formatKm(st.medianKm) : '–' }}</td>
-              <td v-if="mine" class="my-num">{{ formatKm(st.mineKm) }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="my-muted">單位：公里。「平均位置」離實際位置 {{ crowdMeanText }}</div>
-        <div v-if="mine && myRank" class="my-muted">你的總誤差贏過 {{ myRank }}% 的人</div>
-
-        <div class="my-buttons">
-          <button class="my-button primary" type="button" @click="router.push('/')">
-            {{ mine ? '再玩一次' : '我也要玩' }}
-          </button>
-        </div>
-      </aside>
     </main>
-
-    <footer class="my-footer">
-      <span>目前有 {{ submissions.length.toLocaleString() }} 人參與</span>
-    </footer>
 
     <div v-if="loading" class="my-overlay">載入中…</div>
     <div v-else-if="error" class="my-overlay">讀取失敗：{{ error }}</div>
@@ -116,11 +124,11 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, reactive, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
-  import * as d3 from 'd3';
   import TaiwanMap from '../components/TaiwanMap.vue';
-  import { PLANTS, distanceKm, formatKm } from '../config/plants.js';
+  import NuclearMarker from '../components/NuclearMarker.vue';
+  import { PLANTS } from '../config/plants.js';
   import { fetchSubmissions, getCookieId, getLocalAnswer } from '../config/api.js';
 
   const router = useRouter();
@@ -129,48 +137,20 @@
   const error = ref('');
   const selected = ref(null);
 
+  // 地圖圖層開關
+  const show = reactive({ crowd: true, actual: true, mine: true });
+
   // 你的點用這台裝置最新一次作答（第一次之後的改動只存在 localStorage）；沒有的話用你上傳的那筆
   const myUpload = computed(() => submissions.value.find((s) => s.cookieId === getCookieId()) ?? null);
   const mine = computed(() => getLocalAnswer() ?? myUpload.value);
 
+  const layers = computed(() => [
+    { key: 'crowd', label: '每個人放的位置' },
+    { key: 'actual', label: '實際位置' },
+    ...(mine.value ? [{ key: 'mine', label: '你放的位置' }] : []),
+  ]);
+
   const visiblePlants = computed(() => (selected.value === null ? PLANTS : PLANTS.filter((p) => p.id === selected.value)));
-
-  const stats = computed(() =>
-    PLANTS.map((plant) => {
-      const actual = [plant.lon, plant.lat];
-      const points = submissions.value.map((s) => s.guesses[plant.id - 1]);
-      const kms = points.map((g) => distanceKm(g, actual));
-      // 台灣範圍小，經緯度直接平均當作群眾的「平均位置」就夠準
-      const mean = points.length ? [d3.mean(points, (g) => g[0]), d3.mean(points, (g) => g[1])] : null;
-      return {
-        plant,
-        actual,
-        n: points.length,
-        mean,
-        meanKm: d3.mean(kms),
-        medianKm: d3.median(kms),
-        crowdKm: mean ? distanceKm(mean, actual) : null,
-        mineKm: mine.value ? distanceKm(mine.value.guesses[plant.id - 1], actual) : null,
-      };
-    })
-  );
-  const visibleStats = computed(() => stats.value.filter((st) => visiblePlants.value.includes(st.plant)));
-
-  const crowdMeanText = computed(() => {
-    const list = visibleStats.value.filter((st) => st.crowdKm !== null);
-    if (!list.length) return '–';
-    return list.map((st) => `${st.plant.label} ${formatKm(st.crowdKm)}`).join('、');
-  });
-
-  const totalKm = (s) => PLANTS.reduce((sum, p) => sum + distanceKm(s.guesses[p.id - 1], [p.lon, p.lat]), 0);
-  const myRank = computed(() => {
-    if (!mine.value || submissions.value.length < 2) return null;
-    const my = totalKm(mine.value);
-    const others = submissions.value.filter((s) => s !== myUpload.value);
-    return Math.round((others.filter((s) => totalKm(s) > my).length / others.length) * 100);
-  });
-
-  const lineAttrs = ([x1, y1], [x2, y2]) => ({ x1, y1, x2, y2 });
 
   onMounted(async () => {
     try {
@@ -184,30 +164,127 @@
 </script>
 
 <style scoped>
-  .stats {
+  .my-header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .my-title {
+    margin-bottom: 4px;
+  }
+
+  /* 圖層開關：一個一行 */
+  .legend {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .legend button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
-    border-collapse: collapse;
+    padding: 2px 0;
+    border: none;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
   }
-  .stats th {
-    font-weight: 400;
-    text-align: right;
+  .legend button > span:not(.legend-switch) {
+    flex: 1;
+  }
+  .legend svg {
+    flex: none;
+    display: block;
+    overflow: visible;
+  }
+  .legend-switch {
+    font-size: 1.8em;
+    color: var(--my-color-switch-on);
+  }
+  .legend button.off svg,
+  .legend button.off span:not(.legend-switch) {
+    opacity: 0.35;
+  }
+  .legend button.off .legend-switch {
     color: var(--my-color-light-gray);
-    padding-bottom: 4px;
   }
-  .stats td {
-    padding: 3px 0;
-    white-space: nowrap;
+
+  /* 篩選：第一排「全部」、第二排核一～核四，撐滿寬度 */
+  .filter {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
-  .stats td:not(:first-child) {
-    text-align: right;
-    padding-left: 8px;
+  .filter .my-buttons {
+    flex-wrap: nowrap;
   }
-  .stats .my-dot {
-    display: inline-block;
-    vertical-align: -1px;
-    margin-right: 4px;
+  .filter .my-button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 4px;
+    padding-right: 4px;
   }
-  .legend-mine {
-    color: var(--my-color-yellow);
+
+  .side-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  @media (max-width: 767px) {
+    .my-header {
+      gap: 8px;
+    }
+    .my-title {
+      margin-bottom: 0;
+    }
+    .legend {
+      gap: 0;
+      font-size: 0.9rem;
+    }
+    .legend svg {
+      transform: scale(0.85);
+    }
+    /* 篩選併成一排五顆 */
+    .filter {
+      flex-direction: row;
+      gap: 6px;
+    }
+    .filter .my-buttons {
+      gap: 6px;
+    }
+    .filter .my-buttons:first-child {
+      flex: 1 1 0;
+    }
+    .filter .my-buttons:last-child {
+      flex: 4 1 0;
+    }
+    .side-foot {
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .side-foot .my-button {
+      flex: none;
+      padding: 10px 20px;
+    }
+  }
+
+  /* 手機橫式 */
+  @media (orientation: landscape) and (max-height: 560px) {
+    .my-header {
+      gap: 6px;
+    }
+    .legend {
+      gap: 0;
+    }
   }
 </style>

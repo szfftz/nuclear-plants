@@ -1,21 +1,69 @@
 <template>
-  <div class="my-page">
-    <header class="my-header">
-      <h1 class="my-title">核電廠在哪裡？</h1>
-      <div class="my-subtitle">
-        <template v-if="revealed">
-          平均差了 <strong>{{ formatKm(averageKm) }}</strong> 公里，虛線連到真正的位置
-        </template>
-        <template v-else-if="nextPlant">
-          在地圖上點出
-          <strong :style="{ color: nextPlant.color }">{{ nextPlant.label }}</strong>
-          的位置（{{ guesses.length + 1 }} / {{ PLANTS.length }}）
-        </template>
-        <template v-else>四個點都放好了，可以拖曳微調，再按「確定」</template>
-      </div>
-    </header>
+  <div class="my-page my-layout">
+    <aside class="my-side">
+      <header class="my-header">
+        <h1 class="my-title"><span class="my-nowrap">台灣四座核電廠，</span><span class="my-nowrap">你知道在哪裡嗎？</span></h1>
+        <div class="my-prompt" aria-live="polite">
+          <template v-if="revealed">
+            平均差了 <strong>{{ formatKm(averageKm) }}</strong> 公里
+            <span class="my-prompt-note">虛線連到真正的位置</span>
+          </template>
+          <template v-else-if="nextPlant">
+            在地圖上點出
+            <strong class="my-prompt-plant" :style="{ color: nextPlant.color }">{{ nextPlant.label }}</strong>
+            的位置
+          </template>
+          <template v-else>
+            四個點都放好了
+            <span class="my-prompt-note">可以拖曳微調，再按「確定」</span>
+          </template>
+        </div>
+      </header>
 
-    <main class="my-body">
+      <div class="my-panel my-side-panel">
+        <ul class="my-plant-list">
+          <li v-for="(p, i) in PLANTS" :key="p.id" class="my-plant-row" :class="{ 'my-muted': !revealed && i > guesses.length }">
+            <span class="my-dot" :style="{ background: p.color }"></span>
+            <span>{{ p.label }}<template v-if="revealed">（{{ p.name }}）</template></span>
+            <span class="my-num">
+              <template v-if="revealed">差 {{ formatKm(results[i].km) }} km</template>
+              <template v-else-if="i < guesses.length">已放</template>
+              <template v-else-if="i === guesses.length"><span class="my-icon" aria-hidden="true">arrow_back</span>現在</template>
+            </span>
+          </li>
+        </ul>
+
+        <div v-if="!revealed" class="my-buttons">
+          <button class="my-button" type="button" :disabled="!guesses.length" @click="reset">重設</button>
+          <button class="my-button" type="button" :disabled="!guesses.length" @click="guesses.pop()">復原</button>
+          <button class="my-button primary" type="button" :disabled="guesses.length < PLANTS.length" @click="confirm">
+            確定
+          </button>
+        </div>
+        <template v-else>
+          <div class="my-muted">
+            <template v-if="saveState === 'saving'">上傳中…</template>
+            <template v-else-if="saveState === 'uploaded'">已送出<span class="my-icon" aria-hidden="true">check</span></template>
+            <template v-else-if="saveState === 'local'">你已經送出過了，這次的結果只存在這台裝置</template>
+            <template v-else-if="saveState === 'error'">
+              上傳失敗：{{ saveError }}
+              <button class="my-button" type="button" @click="save">重試</button>
+            </template>
+          </div>
+          <div class="my-buttons">
+            <button class="my-button primary" type="button" :disabled="!submittedBefore" @click="router.push('/result')">
+              看大家點的位置
+            </button>
+            <button class="my-button" type="button" @click="reset">再玩一次</button>
+          </div>
+        </template>
+        <button v-if="!revealed && submittedBefore" class="my-button" type="button" @click="router.push('/result')">
+          直接看結果
+        </button>
+      </div>
+    </aside>
+
+    <main class="my-map">
       <TaiwanMap :pickable="!revealed && !!nextPlant" @pick="addGuess">
         <template #default="{ project, invert }">
           <!-- 揭曉：猜測 → 實際的連線與距離 -->
@@ -41,7 +89,7 @@
               :key="`actual-${r.plant.id}`"
               :transform="`translate(${project(r.actual)})`"
             >
-              <rect x="-6" y="-6" width="12" height="12" transform="rotate(45)" :fill="r.plant.color" stroke="#fff" stroke-width="1.5" />
+              <NuclearMarker :color="r.plant.color" :r="13" />
               <text class="my-map-text" :x="ACTUAL_LABEL_OFFSET[i][0]" :y="ACTUAL_LABEL_OFFSET[i][1]" :text-anchor="ACTUAL_LABEL_OFFSET[i][0] < 0 ? 'end' : 'start'" dominant-baseline="central">
                 {{ r.plant.label }} {{ r.plant.name }}
               </text>
@@ -53,63 +101,20 @@
             v-for="(g, i) in guesses"
             :key="`guess-${i}`"
             :transform="`translate(${project(g)})`"
-            :class="['guess', { draggable: !revealed }]"
+            :class="['guess', 'my-badge', { draggable: !revealed, 'no-zoom': !revealed }]"
             @click.stop
             @pointerdown="startDrag($event, i)"
             @pointermove="dragging === i && moveGuess(i, invert($event))"
             @pointerup="dragging = null"
             @pointercancel="dragging = null"
           >
-            <circle r="11" :fill="PLANTS[i].color" stroke="#fff" stroke-width="2" />
-            <text class="my-marker-label">{{ i + 1 }}</text>
+            <rect x="-22" y="-13" width="44" height="26" rx="13" :fill="PLANTS[i].color" stroke="#fff" stroke-width="2" />
+            <text class="my-marker-label">{{ PLANTS[i].label }}</text>
           </g>
         </template>
       </TaiwanMap>
 
-      <aside class="my-panel">
-        <ul class="my-plant-list">
-          <li v-for="(p, i) in PLANTS" :key="p.id" class="my-plant-row" :class="{ 'my-muted': !revealed && i > guesses.length }">
-            <span class="my-dot" :style="{ background: p.color }"></span>
-            <span>{{ p.label }}<template v-if="revealed">（{{ p.name }}）</template></span>
-            <span class="my-num">
-              <template v-if="revealed">差 {{ formatKm(results[i].km) }} km</template>
-              <template v-else-if="i < guesses.length">已放</template>
-              <template v-else-if="i === guesses.length">← 現在</template>
-            </span>
-          </li>
-        </ul>
-
-        <div v-if="!revealed" class="my-buttons">
-          <button class="my-button primary" type="button" :disabled="guesses.length < PLANTS.length" @click="confirm">
-            確定
-          </button>
-          <button class="my-button" type="button" :disabled="!guesses.length" @click="guesses.pop()">復原</button>
-          <button class="my-button" type="button" :disabled="!guesses.length" @click="reset">全部重設</button>
-        </div>
-        <template v-else>
-          <div class="my-muted">
-            <template v-if="saveState === 'saving'">上傳中…</template>
-            <template v-else-if="saveState === 'uploaded'">已送出 ✓</template>
-            <template v-else-if="saveState === 'local'">你已經送出過了，這次的結果只存在這台裝置</template>
-            <template v-else-if="saveState === 'error'">
-              上傳失敗：{{ saveError }}
-              <button class="my-button" type="button" @click="save">重試</button>
-            </template>
-          </div>
-          <div class="my-buttons">
-            <button class="my-button primary" type="button" @click="router.push('/result')">看大家點的位置</button>
-            <button class="my-button" type="button" @click="reset">再玩一次</button>
-          </div>
-        </template>
-        <button v-if="!revealed && submittedBefore" class="my-button" type="button" @click="router.push('/result')">
-          直接看結果
-        </button>
-      </aside>
     </main>
-
-    <footer class="my-footer">
-      <span>台灣四座核電廠，你知道在哪裡嗎？</span>
-    </footer>
   </div>
 </template>
 
@@ -117,15 +122,16 @@
   import { ref, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import TaiwanMap from '../components/TaiwanMap.vue';
+  import NuclearMarker from '../components/NuclearMarker.vue';
   import { PLANTS, distanceKm, formatKm } from '../config/plants.js';
   import { submitAnswer, hasSubmitted } from '../config/api.js';
 
   // 核一、核二、核四 都在北海岸，標籤錯開避免重疊
   const ACTUAL_LABEL_OFFSET = [
-    [-10, -10],
-    [10, -10],
-    [10, 0],
-    [10, 10],
+    [-14, -14],
+    [14, -14],
+    [16, 0],
+    [14, 14],
   ];
 
   const router = useRouter();
