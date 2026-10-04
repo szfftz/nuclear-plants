@@ -6,16 +6,5 @@ export const PLANTS = [
   { id: 4, label: '核四', name: '龍門', place: '新北市貢寮區', lon: 121.9244, lat: 25.0386, color: 'hsl(275, 55%, 52%)' },
 ];
 
-const EARTH_RADIUS_KM = 6371;
-
-// 兩點大圓距離（公里，haversine），點為 [lon, lat]
-export const distanceKm = (a, b) => {
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(b[1] - a[1]);
-  const dLon = toRad(b[0] - a[0]);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
-};
-
-export const formatKm = (km) => (km < 10 ? km.toFixed(1) : Math.round(km).toString());
+// 電廠的 [lon, lat]
+export const plantPosition = (plant) => [plant.lon, plant.lat];

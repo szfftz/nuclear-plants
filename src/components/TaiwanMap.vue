@@ -16,7 +16,6 @@
       :viewBox="`0 0 ${view.w} ${view.h}`"
       :width="view.w"
       :height="view.h"
-      :class="{ pickable }"
       @click="onClick"
     >
       <path class="land" :d="landPath" :transform="transform.toString()" vector-effect="non-scaling-stroke" />
@@ -44,7 +43,6 @@
   import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount } from 'vue';
   import * as d3 from 'd3';
 
-  defineProps({ pickable: { type: Boolean, default: false } });
   const emit = defineEmits(['pick']);
 
   let landPromise = null;

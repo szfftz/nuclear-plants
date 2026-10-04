@@ -75,9 +75,6 @@ body {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
   user-select: none;
 }
-.my-icon-fill {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-}
 
 .my-nowrap {
   display: inline-block;
@@ -171,6 +168,14 @@ body {
   }
 }
 
+/* 手機（直式、橫式）：按鈕平分寬度 */
+@media (max-width: 767px), (orientation: landscape) and (max-height: 560px) {
+  .my-buttons > .my-button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
 /* 手機直式 */
 @media (max-width: 767px) {
   .my-layout {
@@ -233,12 +238,7 @@ body {
   .my-panel .my-muted {
     font-size: 0.9rem;
   }
-  .my-buttons {
-    flex-wrap: nowrap;
-  }
   .my-buttons > .my-button {
-    flex: 1 1 0;
-    min-width: 0;
     min-height: 44px;
     padding: 8px 4px;
   }
@@ -271,12 +271,7 @@ body {
   .my-panel {
     gap: 8px;
   }
-  .my-buttons {
-    flex-wrap: nowrap;
-  }
   .my-buttons > .my-button {
-    flex: 1 1 0;
-    min-width: 0;
     padding: 6px 4px;
   }
 }
@@ -315,7 +310,6 @@ body {
   cursor: not-allowed;
 }
 
-/* 核電廠列表 */
 /* 核電廠清單：圓點｜名稱｜狀態 三欄對齊，狀態緊接在名稱後面 */
 .my-plant-list {
   list-style: none;
@@ -332,6 +326,24 @@ body {
 }
 .my-prompt + .my-plant-list {
   margin-top: 12px;
+}
+/* 手機直式：標題下方的核電廠清單改成橫排、可換行，省高度 */
+@media (max-width: 767px) {
+  .my-header .my-plant-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-top: 8px;
+  }
+  .my-header .my-plant-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .my-header .my-num {
+    margin-left: 0;
+  }
 }
 /* 「← 現在」：黃底標籤，一眼看得到輪到哪一座 */
 .my-now {
@@ -404,23 +416,4 @@ body {
 }
 .my-fade-in {
   animation: my-fade-in 0.5s ease-out both;
-}
-
-/* 手機直式：標題下方的核電廠清單改成橫排、可換行，省高度 */
-@media (max-width: 767px) {
-  .my-header .my-plant-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 16px;
-    margin-top: 8px;
-  }
-  .my-header .my-plant-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-  }
-  .my-header .my-num {
-    margin-left: 0;
-  }
 }

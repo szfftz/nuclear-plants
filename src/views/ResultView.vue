@@ -52,7 +52,7 @@
       </header>
 
       <!-- 篩選：桌機在左欄，手機在畫面下方 -->
-      <div class="my-side-panel side-foot">
+      <div class="my-side-panel">
         <div class="filter">
           <div class="my-buttons">
             <button
@@ -96,20 +96,19 @@
 
           <!-- 你放的位置 -->
           <g v-if="mine && show.mine">
-            <g
+            <PlantBadge
               v-for="plant in visiblePlants"
               :key="`mine-${plant.id}`"
-              class="my-badge"
-              :transform="`translate(${project(mine.guesses[plant.id - 1])})`"
-            >
-              <rect x="-22" y="-13" width="44" height="26" rx="13" :fill="plant.color" stroke="var(--my-color-yellow)" stroke-width="3" />
-              <text class="my-marker-label">{{ plant.label }}</text>
-            </g>
+              :plant="plant"
+              :at="project(mine.guesses[plant.id - 1])"
+              stroke="var(--my-color-yellow)"
+              :stroke-width="3"
+            />
           </g>
 
           <!-- 實際位置 -->
           <g v-if="show.actual">
-            <g v-for="plant in visiblePlants" :key="`actual-${plant.id}`" :transform="`translate(${project([plant.lon, plant.lat])})`">
+            <g v-for="plant in visiblePlants" :key="`actual-${plant.id}`" :transform="`translate(${project(plantPosition(plant))})`">
               <NuclearMarker :color="plant.color" :r="12" />
             </g>
           </g>
@@ -128,8 +127,9 @@
   import { useRouter } from 'vue-router';
   import TaiwanMap from '../components/TaiwanMap.vue';
   import NuclearMarker from '../components/NuclearMarker.vue';
-  import { PLANTS } from '../config/plants.js';
-  import { fetchSubmissions, getCookieId, getLocalAnswer } from '../config/api.js';
+  import PlantBadge from '../components/PlantBadge.vue';
+  import { PLANTS, plantPosition } from '../config/plants.js';
+  import { fetchSubmissions, getCookieId, getLocalAnswer } from '../services/answers.js';
 
   const router = useRouter();
   const submissions = ref([]);
@@ -295,11 +295,6 @@
   .back-link .my-icon {
     margin: 0;
   }
-  .side-foot {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
 
   @media (max-width: 767px) {
     .my-header {
@@ -328,9 +323,6 @@
     }
     .filter .my-buttons:last-child {
       flex: 1 1 0;
-    }
-    .side-foot {
-      gap: 8px;
     }
     .back-link {
       min-height: 36px;

@@ -59,7 +59,7 @@
     <main class="my-map">
       <!-- 還沒放任何點時，在地圖正中央提示可縮放位移；點下第一個點就隱藏 -->
       <div v-if="!guesses.length" class="map-hint">地圖可縮放位移</div>
-      <TaiwanMap :pickable="!revealed && !!nextPlant" @pick="addGuess">
+      <TaiwanMap @pick="addGuess">
         <template #default="{ project, invert }">
           <!-- 揭曉：猜測 → 實際的連線與距離 -->
           <g v-if="revealed" class="my-fade-in">
@@ -70,12 +70,7 @@
                 stroke-width="1.5"
                 stroke-dasharray="4 3"
               />
-              <text
-                class="my-map-text"
-                :x="midpoint(project(r.guess), project(r.actual))[0] + 8"
-                :y="midpoint(project(r.guess), project(r.actual))[1]"
-                :fill="r.plant.color"
-              >
+              <text class="my-map-text" v-bind="kmLabelAttrs(project(r.guess), project(r.actual))" :fill="r.plant.color">
                 {{ formatKm(r.km) }} km
               </text>
             </g>
@@ -88,25 +83,22 @@
             </g>
           </g>
 
-          <!-- 使用者放的點 -->
-          <g
+          <!-- 使用者放的點：可拖曳微調 -->
+          <PlantBadge
             v-for="(g, i) in guesses"
             :key="`guess-${i}`"
-            :transform="`translate(${project(g)})`"
-            :class="['guess', 'my-badge', 'draggable', 'no-zoom']"
+            :plant="PLANTS[i]"
+            :at="project(g)"
+            class="guess no-zoom"
             @click.stop
             @pointerdown="startDrag($event, i)"
             @pointermove="dragging === i && moveGuess(i, invert($event))"
             @pointerup="dragging = null"
             @pointercancel="dragging = null"
-          >
-            <rect x="-22" y="-13" width="44" height="26" rx="13" :fill="PLANTS[i].color" stroke="#fff" stroke-width="2" />
-            <text class="my-marker-label">{{ PLANTS[i].label }}</text>
-          </g>
+          />
         </template>
         <template v-if="participants !== null" #note>目前有 {{ participants.toLocaleString() }} 人參與</template>
       </TaiwanMap>
-
     </main>
   </div>
 </template>
@@ -116,8 +108,10 @@
   import { useRouter } from 'vue-router';
   import TaiwanMap from '../components/TaiwanMap.vue';
   import NuclearMarker from '../components/NuclearMarker.vue';
-  import { PLANTS, distanceKm, formatKm } from '../config/plants.js';
-  import { submitAnswer, hasSubmitted, checkUploaded, fetchMyAnswer, fetchParticipantCount } from '../config/api.js';
+  import PlantBadge from '../components/PlantBadge.vue';
+  import { PLANTS, plantPosition } from '../config/plants.js';
+  import { distanceKm, formatKm, lineAttrs, midpoint } from '../lib/geo.js';
+  import { submitAnswer, hasSubmitted, checkUploaded, fetchMyAnswer, fetchParticipantCount } from '../services/answers.js';
 
   const router = useRouter();
   const guesses = ref([]);
@@ -154,7 +148,7 @@
   const results = computed(() =>
     PLANTS.map((plant, i) => {
       const guess = guesses.value[i];
-      const actual = [plant.lon, plant.lat];
+      const actual = plantPosition(plant);
       return { plant, guess, actual, km: distanceKm(guess, actual) };
     })
   );
@@ -203,8 +197,11 @@
     saveState.value = 'idle';
   };
 
-  const lineAttrs = ([x1, y1], [x2, y2]) => ({ x1, y1, x2, y2 });
-  const midpoint = ([x1, y1], [x2, y2]) => [(x1 + x2) / 2, (y1 + y2) / 2];
+  // 距離標籤放在連線中點右邊
+  const kmLabelAttrs = (from, to) => {
+    const [x, y] = midpoint(from, to);
+    return { x: x + 8, y };
+  };
 </script>
 
 <style scoped>
@@ -228,10 +225,10 @@
       font-size: 2rem;
     }
   }
-  .guess.draggable {
+  .guess {
     cursor: grab;
   }
-  .guess.draggable:active {
+  .guess:active {
     cursor: grabbing;
   }
 </style>

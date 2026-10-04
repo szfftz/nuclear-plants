@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from './views/HomeView.vue';
 import ResultView from './views/ResultView.vue';
-import { checkUploaded } from './config/api.js';
+import { checkUploaded } from './services/answers.js';
 
 // 用 hash 路由，靜態主機（GitHub Pages）不用處理 404 轉址
 export default createRouter({
