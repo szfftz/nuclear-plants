@@ -45,7 +45,7 @@
                 />
               </svg>
               <span>{{ layer.label }}</span>
-              <span class="my-icon my-icon-fill legend-switch" aria-hidden="true">{{ show[layer.key] ? 'toggle_on' : 'toggle_off' }}</span>
+              <span class="legend-switch" aria-hidden="true"><span class="legend-knob"></span></span>
             </button>
           </li>
         </ul>
@@ -54,11 +54,6 @@
       <!-- 篩選：桌機在左欄，手機在畫面下方 -->
       <div class="my-side-panel side-foot">
         <div class="filter">
-          <div class="my-buttons">
-            <button class="my-button" :class="{ active: selected === null }" type="button" @click="selected = null">
-              全部
-            </button>
-          </div>
           <div class="my-buttons">
             <button
               v-for="p in PLANTS"
@@ -69,6 +64,11 @@
               @click="selected = p.id"
             >
               {{ p.label }}
+            </button>
+          </div>
+          <div class="my-buttons">
+            <button class="my-button" :class="{ active: selected === null }" type="button" @click="selected = null">
+              全部
             </button>
           </div>
         </div>
@@ -216,19 +216,44 @@
     display: block;
     overflow: visible;
   }
+  /* 開關：維持原本 Material 開關的大小，只把白點放大；關掉時軌道變灰、白點移到左邊 */
   .legend-switch {
-    font-size: 1.8em;
-    color: var(--my-color-switch-on);
+    --track-w: 1.72em;
+    --track-h: 0.92em;
+    --knob: 0.7em;
+    --gap: calc((var(--track-h) - var(--knob)) / 2);
+    position: relative;
+    flex: none;
+    margin: 0 0.1em;
+    width: var(--track-w);
+    height: var(--track-h);
+    border-radius: 999px;
+    background-color: var(--my-color-switch-on);
+    transition: background-color 0.2s;
+  }
+  .legend-knob {
+    position: absolute;
+    top: var(--gap);
+    left: calc(var(--track-w) - var(--knob) - var(--gap));
+    width: var(--knob);
+    height: var(--knob);
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: left 0.2s;
+  }
+  .legend button.off .legend-knob {
+    left: var(--gap);
   }
   .legend button.off svg,
-  .legend button.off span:not(.legend-switch) {
+  .legend button.off > span:not(.legend-switch) {
     opacity: 0.35;
   }
   .legend button.off .legend-switch {
-    color: var(--my-color-light-gray);
+    background-color: var(--my-color-light-gray);
   }
 
-  /* 篩選：第一排「全部」、第二排核一～核四，撐滿寬度 */
+  /* 篩選：第一排核一～核四、第二排「全部」，撐滿寬度 */
   .filter {
     display: flex;
     flex-direction: column;
@@ -291,10 +316,10 @@
       gap: 6px;
     }
     .filter .my-buttons:first-child {
-      flex: 1 1 0;
+      flex: 4 1 0;
     }
     .filter .my-buttons:last-child {
-      flex: 4 1 0;
+      flex: 1 1 0;
     }
     .side-foot {
       gap: 8px;

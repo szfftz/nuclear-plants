@@ -20,7 +20,7 @@
         <ul class="my-plant-list">
           <li v-for="(p, i) in PLANTS" :key="p.id" class="my-plant-row" :class="{ 'my-muted': !revealed && i > guesses.length }">
             <span class="my-dot" :style="{ background: p.color }"></span>
-            <span>{{ p.label }}<template v-if="revealed">（{{ p.name }}）</template></span>
+            <span>{{ p.label }}</span>
             <span class="my-num">
               <template v-if="revealed">差 {{ formatKm(results[i].km) }} km</template>
               <template v-else-if="i < guesses.length">已放</template>
