@@ -45,7 +45,7 @@
     </aside>
 
     <main class="my-map">
-      <!-- 地圖正中央的浮水印：所有提示都在這裡 -->
+      <!-- 地圖正中央的浮水印：所有提示都在這裡；點核一～核四時都附上「地圖可縮放位移」 -->
       <div class="map-hint" aria-live="polite">
         <div v-if="revealed">平均差了 {{ formatKm(averageKm) }} 公里</div>
         <div v-else-if="nextPlant">
@@ -55,7 +55,7 @@
           <div>四個點都放好了</div>
           <div class="map-hint-sub">可以拖曳調整位置</div>
         </template>
-        <div v-if="!guesses.length" class="map-hint-sub">地圖可縮放位移</div>
+        <div v-if="!revealed && nextPlant" class="map-hint-sub">地圖可縮放位移</div>
       </div>
       <TaiwanMap @pick="addGuess">
         <template #default="{ project, invert }">
