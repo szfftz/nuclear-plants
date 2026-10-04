@@ -53,6 +53,7 @@
           </button>
           <button v-if="submittedBefore" class="my-button" type="button" @click="router.push('/result')">看結果</button>
         </div>
+        <div v-if="participants !== null" class="my-muted participants">目前有 {{ participants.toLocaleString() }} 人參與</div>
       </div>
     </aside>
 
@@ -97,7 +98,6 @@
             @pointercancel="dragging = null"
           />
         </template>
-        <template v-if="participants !== null" #note>目前有 {{ participants.toLocaleString() }} 人參與</template>
       </TaiwanMap>
     </main>
   </div>
@@ -227,6 +227,9 @@
     .map-hint {
       font-size: 2rem;
     }
+  }
+  .participants {
+    font-size: 0.875rem;
   }
   .guess {
     cursor: grab;
