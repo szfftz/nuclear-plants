@@ -35,7 +35,6 @@
           <template v-if="saveState === 'saving'">上傳中…</template>
           <template v-else-if="saveState === 'uploaded'">已送出<span class="my-icon" aria-hidden="true">check</span></template>
           <template v-else-if="saveState === 'local'">你已經送出過了，這次的結果只存在這台裝置</template>
-          <template v-else-if="saveState === 'restored'">這是你上次的作答</template>
           <template v-else-if="saveState === 'error'">
             上傳失敗：{{ saveError }}
             <button class="my-button" type="button" @click="save">重試</button>
@@ -58,6 +57,8 @@
     </aside>
 
     <main class="my-map">
+      <!-- 還沒放任何點時，在地圖正中央提示可縮放位移；點下第一個點就隱藏 -->
+      <div v-if="!guesses.length" class="map-hint">地圖可縮放位移</div>
       <TaiwanMap :pickable="!revealed && !!nextPlant" @pick="addGuess">
         <template #default="{ project, invert }">
           <!-- 揭曉：猜測 → 實際的連線與距離 -->
@@ -207,6 +208,26 @@
 </script>
 
 <style scoped>
+  /* 浮水印：大字、半透明，不擋點擊 */
+  .map-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(57, 57, 57, 0.18);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+  }
+  @media (max-width: 767px) {
+    .map-hint {
+      font-size: 2rem;
+    }
+  }
   .guess.draggable {
     cursor: grab;
   }
