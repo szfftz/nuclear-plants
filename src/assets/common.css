@@ -233,11 +233,6 @@ body {
   .my-panel .my-muted {
     font-size: 0.9rem;
   }
-  .my-plant-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 16px;
-  }
   .my-buttons {
     flex-wrap: nowrap;
   }
@@ -321,18 +316,36 @@ body {
 }
 
 /* 核電廠列表 */
+/* 核電廠清單：圓點｜名稱｜狀態 三欄對齊，狀態緊接在名稱後面 */
 .my-plant-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 12px max-content max-content;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 6px;
 }
 .my-plant-row {
-  display: flex;
+  display: contents;
+}
+.my-prompt + .my-plant-list {
+  margin-top: 12px;
+}
+/* 「← 現在」：黃底標籤，一眼看得到輪到哪一座 */
+.my-now {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  padding: 1px 8px 1px 4px;
+  border-radius: 999px;
+  background-color: var(--my-color-yellow);
+  color: var(--my-color-dark-gray);
+  font-weight: 700;
+}
+.my-now .my-icon {
+  margin: 0 2px 0 0;
+  vertical-align: 0;
 }
 .my-dot {
   flex: none;
@@ -343,8 +356,10 @@ body {
 .my-muted {
   color: var(--my-color-light-gray);
 }
+/* 狀態（已放／現在／差幾公里）緊接在名稱後面，不要推到最右邊 */
 .my-num {
-  margin-left: auto;
+  margin-left: 4px;
+  color: var(--my-color-light-gray);
   font-variant-numeric: tabular-nums;
 }
 
@@ -389,4 +404,23 @@ body {
 }
 .my-fade-in {
   animation: my-fade-in 0.5s ease-out both;
+}
+
+/* 手機直式：標題下方的核電廠清單改成橫排、可換行，省高度 */
+@media (max-width: 767px) {
+  .my-header .my-plant-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-top: 8px;
+  }
+  .my-header .my-plant-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .my-header .my-num {
+    margin-left: 0;
+  }
 }

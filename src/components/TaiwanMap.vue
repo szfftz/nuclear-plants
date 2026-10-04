@@ -1,6 +1,6 @@
 <!--
   台灣底圖：鋪滿整個畫面（position: fixed），可縮放、拖曳平移。
-  元件本身放在版面的地圖區（佔位用）：全台視角會放進這個區域；螢幕右下角有「放大／縮小／顯示全台」按鈕。
+  元件本身放在版面的地圖區（佔位用）：全台視角會放進這個區域，左下角（台灣西南方）有「放大／縮小／顯示全台」按鈕。
   圖層透過 scoped slot 畫在同一個 <svg> 裡：
     project([lon, lat]) -> [x, y]   已套用縮放，標記大小不會跟著變
     invert(pointerEvent) -> [lon, lat]
@@ -34,6 +34,8 @@
         <span class="my-icon" aria-hidden="true">zoom_out_map</span>
         <span>顯示全台</span>
       </button>
+      <!-- 按鈕下方的附註（例如參與人數） -->
+      <div v-if="$slots.note" class="zoom-note"><slot name="note" /></div>
     </div>
   </div>
 </template>
@@ -216,15 +218,15 @@
     stroke-width: 0.6;
   }
 
-  /* 縮放按鈕：貼在螢幕右下角 */
+  /* 縮放按鈕：地圖區左下角（台灣西南方的海面上） */
   .zoom-controls {
-    position: fixed;
-    right: max(16px, env(safe-area-inset-right));
-    bottom: max(16px, env(safe-area-inset-bottom));
+    position: absolute;
+    left: 0;
+    bottom: 0;
     z-index: 2;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 6px;
   }
   .zoom-button {
@@ -259,11 +261,14 @@
   .zoom-reset {
     padding: 0 12px 0 8px;
   }
-  /* 手機直式：下方有按鈕區，縮放按鈕放在地圖區右下（仍貼齊螢幕右側） */
+  .zoom-note {
+    padding: 2px 2px 0;
+    color: var(--my-color-light-gray);
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
   @media (max-width: 767px) {
     .zoom-controls {
-      position: absolute;
-      right: 0;
       bottom: 8px;
     }
   }

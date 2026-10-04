@@ -3,6 +3,9 @@
     <!-- 左欄：標題、圖層開關、篩選，垂直排列（手機：上方標題區＋下方按鈕） -->
     <aside class="my-side">
       <header class="my-header">
+        <button class="back-link" type="button" @click="goBack">
+          <span class="my-icon" aria-hidden="true">arrow_back</span>回到前頁
+        </button>
         <h1 class="my-title">大家點的位置</h1>
 
         <ul class="legend">
@@ -46,7 +49,10 @@
             </button>
           </li>
         </ul>
+      </header>
 
+      <!-- 篩選：桌機在左欄，手機在畫面下方 -->
+      <div class="my-side-panel side-foot">
         <div class="filter">
           <div class="my-buttons">
             <button class="my-button" :class="{ active: selected === null }" type="button" @click="selected = null">
@@ -66,13 +72,6 @@
             </button>
           </div>
         </div>
-      </header>
-
-      <div class="my-side-panel side-foot">
-        <button class="my-button primary" type="button" @click="router.push('/')">
-          {{ mine ? '再玩一次' : '我也要玩' }}
-        </button>
-        <span v-if="!loading" class="my-muted">目前有 {{ submissions.length.toLocaleString() }} 人參與</span>
       </div>
     </aside>
 
@@ -115,6 +114,7 @@
             </g>
           </g>
         </template>
+        <template v-if="!loading" #note>目前有 {{ submissions.length.toLocaleString() }} 人參與</template>
       </TaiwanMap>
     </main>
 
@@ -152,6 +152,12 @@
 
   const visiblePlants = computed(() => (selected.value === null ? PLANTS : PLANTS.filter((p) => p.id === selected.value)));
 
+  // 回到前一頁；直接打開結果頁（沒有上一頁）時回首頁
+  const goBack = () => {
+    if (window.history.state?.back) router.back();
+    else router.push('/');
+  };
+
   onMounted(async () => {
     try {
       submissions.value = await fetchSubmissions();
@@ -171,6 +177,11 @@
   }
   .my-title {
     margin-bottom: 4px;
+  }
+  /* 標題上方留 pt-5（3rem） */
+  .back-link + .my-title {
+    padding-top: 3rem;
+    margin-top: -16px;
   }
 
   /* 圖層開關：一個一行 */
@@ -233,10 +244,28 @@
     padding-right: 4px;
   }
 
+  /* 回到前頁：純文字連結樣式，不要按鈕外框 */
+  .back-link {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    color: var(--my-color-dark-gray);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .back-link .my-icon {
+    margin: 0;
+  }
   .side-foot {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 16px;
   }
 
   @media (max-width: 767px) {
@@ -268,13 +297,14 @@
       flex: 4 1 0;
     }
     .side-foot {
-      flex-direction: row-reverse;
-      align-items: center;
-      justify-content: space-between;
+      gap: 8px;
     }
-    .side-foot .my-button {
-      flex: none;
-      padding: 10px 20px;
+    .back-link {
+      min-height: 36px;
+    }
+    .back-link + .my-title {
+      padding-top: 1.5rem;
+      margin-top: -8px;
     }
   }
 

@@ -6,7 +6,6 @@
         <div class="my-prompt" aria-live="polite">
           <template v-if="revealed">
             平均差了 <strong>{{ formatKm(averageKm) }}</strong> 公里
-            <span class="my-prompt-note">虛線連到真正的位置</span>
           </template>
           <template v-else-if="nextPlant">
             在地圖上點出
@@ -18,9 +17,6 @@
             <span class="my-prompt-note">可以拖曳微調，再按「確定」</span>
           </template>
         </div>
-      </header>
-
-      <div class="my-panel my-side-panel">
         <ul class="my-plant-list">
           <li v-for="(p, i) in PLANTS" :key="p.id" class="my-plant-row" :class="{ 'my-muted': !revealed && i > guesses.length }">
             <span class="my-dot" :style="{ background: p.color }"></span>
@@ -28,38 +24,36 @@
             <span class="my-num">
               <template v-if="revealed">差 {{ formatKm(results[i].km) }} km</template>
               <template v-else-if="i < guesses.length">已放</template>
-              <template v-else-if="i === guesses.length"><span class="my-icon" aria-hidden="true">arrow_back</span>現在</template>
+              <span v-else-if="i === guesses.length" class="my-now"><span class="my-icon" aria-hidden="true">arrow_back</span>現在</span>
             </span>
           </li>
         </ul>
+      </header>
 
-        <div v-if="!revealed" class="my-buttons">
+      <div class="my-panel my-side-panel">
+        <div v-if="revealed" class="my-muted">
+          <template v-if="saveState === 'saving'">上傳中…</template>
+          <template v-else-if="saveState === 'uploaded'">已送出<span class="my-icon" aria-hidden="true">check</span></template>
+          <template v-else-if="saveState === 'local'">你已經送出過了，這次的結果只存在這台裝置</template>
+          <template v-else-if="saveState === 'restored'">這是你上次的作答</template>
+          <template v-else-if="saveState === 'error'">
+            上傳失敗：{{ saveError }}
+            <button class="my-button" type="button" @click="save">重試</button>
+          </template>
+        </div>
+        <!-- 不論是否揭曉都可以重設、確定；送出過才有「看結果」 -->
+        <div class="my-buttons">
           <button class="my-button" type="button" :disabled="!guesses.length" @click="reset">重設</button>
-          <button class="my-button" type="button" :disabled="!guesses.length" @click="guesses.pop()">復原</button>
-          <button class="my-button primary" type="button" :disabled="guesses.length < PLANTS.length" @click="confirm">
+          <button
+            class="my-button primary"
+            type="button"
+            :disabled="guesses.length < PLANTS.length"
+            @click="confirm"
+          >
             確定
           </button>
+          <button v-if="submittedBefore" class="my-button" type="button" @click="router.push('/result')">看結果</button>
         </div>
-        <template v-else>
-          <div class="my-muted">
-            <template v-if="saveState === 'saving'">上傳中…</template>
-            <template v-else-if="saveState === 'uploaded'">已送出<span class="my-icon" aria-hidden="true">check</span></template>
-            <template v-else-if="saveState === 'local'">你已經送出過了，這次的結果只存在這台裝置</template>
-            <template v-else-if="saveState === 'error'">
-              上傳失敗：{{ saveError }}
-              <button class="my-button" type="button" @click="save">重試</button>
-            </template>
-          </div>
-          <div class="my-buttons">
-            <button class="my-button primary" type="button" :disabled="!submittedBefore" @click="router.push('/result')">
-              看大家點的位置
-            </button>
-            <button class="my-button" type="button" @click="reset">再玩一次</button>
-          </div>
-        </template>
-        <button v-if="!revealed && submittedBefore" class="my-button" type="button" @click="router.push('/result')">
-          直接看結果
-        </button>
       </div>
     </aside>
 
@@ -85,14 +79,11 @@
               </text>
             </g>
             <g
-              v-for="(r, i) in results"
+              v-for="r in results"
               :key="`actual-${r.plant.id}`"
               :transform="`translate(${project(r.actual)})`"
             >
               <NuclearMarker :color="r.plant.color" :r="13" />
-              <text class="my-map-text" :x="ACTUAL_LABEL_OFFSET[i][0]" :y="ACTUAL_LABEL_OFFSET[i][1]" :text-anchor="ACTUAL_LABEL_OFFSET[i][0] < 0 ? 'end' : 'start'" dominant-baseline="central">
-                {{ r.plant.label }} {{ r.plant.name }}
-              </text>
             </g>
           </g>
 
@@ -101,7 +92,7 @@
             v-for="(g, i) in guesses"
             :key="`guess-${i}`"
             :transform="`translate(${project(g)})`"
-            :class="['guess', 'my-badge', { draggable: !revealed, 'no-zoom': !revealed }]"
+            :class="['guess', 'my-badge', 'draggable', 'no-zoom']"
             @click.stop
             @pointerdown="startDrag($event, i)"
             @pointermove="dragging === i && moveGuess(i, invert($event))"
@@ -112,6 +103,7 @@
             <text class="my-marker-label">{{ PLANTS[i].label }}</text>
           </g>
         </template>
+        <template v-if="participants !== null" #note>目前有 {{ participants.toLocaleString() }} 人參與</template>
       </TaiwanMap>
 
     </main>
@@ -119,20 +111,12 @@
 </template>
 
 <script setup>
-  import { ref, computed } from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import TaiwanMap from '../components/TaiwanMap.vue';
   import NuclearMarker from '../components/NuclearMarker.vue';
   import { PLANTS, distanceKm, formatKm } from '../config/plants.js';
-  import { submitAnswer, hasSubmitted } from '../config/api.js';
-
-  // 核一、核二、核四 都在北海岸，標籤錯開避免重疊
-  const ACTUAL_LABEL_OFFSET = [
-    [-14, -14],
-    [14, -14],
-    [16, 0],
-    [14, 14],
-  ];
+  import { submitAnswer, hasSubmitted, checkUploaded, fetchMyAnswer, fetchParticipantCount } from '../config/api.js';
 
   const router = useRouter();
   const guesses = ref([]);
@@ -141,6 +125,28 @@
   const saveState = ref('idle');
   const saveError = ref('');
   const submittedBefore = ref(hasSubmitted());
+  const participants = ref(null);
+
+  const loadParticipants = async () => {
+    try {
+      participants.value = await fetchParticipantCount();
+    } catch {
+      // 讀不到就不顯示人數
+    }
+  };
+  onMounted(async () => {
+    loadParticipants();
+    // 以資料庫為準更新「有沒有送出過」；送出過就帶出上次的作答，可以直接重設、確定
+    submittedBefore.value = await checkUploaded();
+    if (submittedBefore.value && !guesses.value.length) {
+      const previous = await fetchMyAnswer();
+      if (previous && !guesses.value.length) {
+        guesses.value = previous;
+        revealed.value = true;
+        saveState.value = 'restored';
+      }
+    }
+  });
 
   const nextPlant = computed(() => PLANTS[guesses.value.length] ?? null);
 
@@ -158,8 +164,14 @@
     guesses.value.push(lonLat);
   };
 
+  // 揭曉後再調整：回到作答狀態，改完再按確定
+  const unreveal = () => {
+    revealed.value = false;
+    saveState.value = 'idle';
+  };
+
   const startDrag = (event, i) => {
-    if (revealed.value) return;
+    if (revealed.value) unreveal();
     dragging.value = i;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -171,7 +183,8 @@
     saveState.value = 'saving';
     try {
       saveState.value = await submitAnswer(guesses.value);
-      submittedBefore.value = true;
+      submittedBefore.value = true; // uploaded 或 local 都代表資料庫裡已經有了
+      if (saveState.value === 'uploaded') loadParticipants();
     } catch (e) {
       saveError.value = e.message;
       saveState.value = 'error';

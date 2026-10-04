@@ -51,7 +51,16 @@ export const getCookieId = () => {
   return id;
 };
 
+// 「有送出」＝資料庫裡已經有這個 cookie_id 的資料。cookie 只當快取，真正以資料庫為準
 export const hasSubmitted = () => cookie.get('submitted') === '1';
+
+export const checkUploaded = async () => {
+  const { data, error } = await supabase.from(TABLE).select('id').eq('cookie_id', getCookieId()).limit(1);
+  if (error) return hasSubmitted(); // 連不上就先相信 cookie
+  const uploaded = data.length > 0;
+  cookie.set('submitted', uploaded ? '1' : '0');
+  return uploaded;
+};
 
 // 這台裝置最近一次的作答：{ guesses: [[lon, lat] x 4], update_at }
 export const getLocalAnswer = () => local.get('answer');
@@ -71,7 +80,7 @@ export const submitAnswer = async (guesses) => {
   const now = new Date().toISOString();
   local.set('answer', { guesses, update_at: now });
 
-  if (hasSubmitted()) return 'local';
+  if (await checkUploaded()) return 'local';
 
   const cookieId = getCookieId();
   const rows = PLANTS.map((plant, i) => ({
@@ -120,4 +129,21 @@ export const fetchSubmissions = async () => {
     byUser.get(row.cookie_id).guesses[index] = [row.lon, row.lat];
   });
   return [...byUser.values()].filter((s) => PLANTS.every((_, i) => s.guesses[i]));
+};
+
+// 這台裝置上次的作答：先看 localStorage（第一次之後的改動都在這），沒有再用資料庫裡上傳的那筆
+export const fetchMyAnswer = async () => {
+  const localAnswer = getLocalAnswer();
+  if (localAnswer?.guesses?.length === PLANTS.length) return localAnswer.guesses;
+  const { data, error } = await supabase.from(TABLE).select('name, lat, lon').eq('cookie_id', getCookieId());
+  if (error || !data) return null;
+  const guesses = PLANTS.map((p) => data.find((row) => row.name === p.label)).map((row) => row && [row.lon, row.lat]);
+  return guesses.every(Boolean) ? guesses : null;
+};
+
+// 參與人數：每人上傳四列（核一～核四）
+export const fetchParticipantCount = async () => {
+  const { count, error } = await supabase.from(TABLE).select('id', { count: 'exact', head: true });
+  if (error) throw new Error(error.message);
+  return Math.floor((count ?? 0) / PLANTS.length);
 };
