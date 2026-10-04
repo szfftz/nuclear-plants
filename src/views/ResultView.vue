@@ -40,8 +40,8 @@
                   height="16"
                   rx="8"
                   fill="var(--my-color-dark-gray)"
-                  stroke="var(--my-color-yellow)"
-                  stroke-width="2.5"
+                  stroke="#fff"
+                  stroke-width="3"
                 />
               </svg>
               <span>{{ layer.label }}</span>
@@ -58,12 +58,13 @@
             <button
               v-for="p in PLANTS"
               :key="p.id"
-              class="my-button"
+              class="my-button filter-plant"
               :class="{ active: selected === p.id }"
+              :style="{ '--plant-color': p.color }"
               type="button"
               @click="selected = p.id"
             >
-              <span class="my-dot filter-dot" :style="{ background: p.color }"></span>{{ p.label }}
+              {{ p.label }}
             </button>
           </div>
           <div class="my-buttons">
@@ -101,8 +102,6 @@
               :key="`mine-${plant.id}`"
               :plant="plant"
               :at="project(mine.guesses[plant.id - 1])"
-              stroke="var(--my-color-yellow)"
-              :stroke-width="3"
             />
           </g>
 
@@ -263,6 +262,7 @@
     flex-wrap: nowrap;
   }
   .filter .my-button {
+    border-radius: 999px;
     flex: 1 1 0;
     min-width: 0;
     padding-left: 4px;
@@ -272,9 +272,20 @@
     justify-content: center;
     gap: 6px;
   }
-  .filter-dot {
-    width: 10px;
-    height: 10px;
+  /* 核一～核四：電廠顏色當底色、白字（跟地圖上的標籤一樣） */
+  .filter .filter-plant,
+  .filter .filter-plant:hover:not(:disabled) {
+    background-color: var(--plant-color);
+    color: #fff;
+    font-weight: 700;
+  }
+  /* 選到的核一～核四：外框變黃色（跟作答頁「輪到」一樣）；「全部」維持白底、不加黃框 */
+  .filter .filter-plant.active {
+    box-shadow: inset 0 0 0 3px var(--my-color-yellow);
+  }
+  .filter .my-button.active:not(.filter-plant),
+  .filter .my-button.active:not(.filter-plant):hover {
+    background-color: var(--my-color-land);
   }
 
   /* 回到前頁：純文字連結樣式，不要按鈕外框 */

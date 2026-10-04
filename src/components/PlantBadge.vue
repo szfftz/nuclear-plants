@@ -12,6 +12,6 @@
     // 螢幕座標 [x, y]
     at: { type: Array, required: true },
     stroke: { type: String, default: '#fff' },
-    strokeWidth: { type: Number, default: 2 },
+    strokeWidth: { type: Number, default: 3 },
   });
 </script>

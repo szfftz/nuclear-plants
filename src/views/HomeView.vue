@@ -3,21 +3,14 @@
     <aside class="my-side">
       <header class="my-header">
         <h1 class="my-title"><span class="my-nowrap">台灣四座核電廠，</span><span class="my-nowrap">你知道在哪裡嗎？</span></h1>
-        <div class="my-prompt" aria-live="polite">
-          <template v-if="revealed">
-            平均差了 <strong>{{ formatKm(averageKm) }}</strong> 公里
-          </template>
-          <template v-else-if="nextPlant">
-            在地圖上點出
-            <strong class="my-prompt-plant" :style="{ color: nextPlant.color }">{{ nextPlant.label }}</strong>
-            的位置
-          </template>
-          <template v-else>四個點都放好了</template>
+        <!-- 作答中的提示都在地圖中央（浮水印）；這裡只在揭曉後顯示平均差距 -->
+        <div v-if="revealed" class="my-prompt" aria-live="polite">
+          平均差了 <strong>{{ formatKm(averageKm) }}</strong> 公里
         </div>
         <ul class="my-plant-list">
           <li v-for="(p, i) in PLANTS" :key="p.id" class="my-plant-row" :class="{ 'my-muted': !revealed && i > guesses.length }">
-            <span class="my-plant-name" :class="{ 'my-now': !revealed && i === guesses.length }">
-              <span class="my-dot" :style="{ background: p.color }"></span>{{ p.label }}
+            <span class="my-plant-pill" :class="{ 'my-now': !revealed && i === guesses.length }" :style="{ background: p.color }">
+              {{ p.label }}
             </span>
             <span class="my-num">
               <template v-if="revealed">差 {{ formatKm(results[i].km) }} km</template>
@@ -54,8 +47,14 @@
     </aside>
 
     <main class="my-map">
-      <!-- 還沒放任何點時，在地圖正中央提示可縮放位移；點下第一個點就隱藏 -->
-      <div v-if="!guesses.length" class="map-hint">地圖可縮放位移</div>
+      <!-- 地圖正中央的浮水印：作答中提示要點哪一座（還沒放點時再提示可縮放位移）；四點放好後提示可以確定 -->
+      <div v-if="!revealed" class="map-hint" aria-live="polite">
+        <div v-if="nextPlant">
+          在地圖上點出 <span :style="{ color: nextPlant.color }">{{ nextPlant.label }}</span> 的位置
+        </div>
+        <div v-else>四個點都放好了</div>
+        <div v-if="!guesses.length" class="map-hint-sub">地圖可縮放位移</div>
+      </div>
       <TaiwanMap @pick="addGuess">
         <template #default="{ project, invert }">
           <!-- 揭曉：猜測 → 實際的連線與距離 -->
@@ -211,21 +210,30 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 2;
-    font-size: 3rem;
+    text-align: center;
+    font-size: 2.5rem;
     font-weight: 700;
     letter-spacing: 0.1em;
-    color: rgba(57, 57, 57, 0.18);
+    color: var(--my-color-dark-gray);
+    opacity: 0.25;
     white-space: nowrap;
     pointer-events: none;
     user-select: none;
   }
-  @media (max-width: 767px) {
+  .map-hint-sub {
+    margin-top: 8px;
+    font-size: 0.6em;
+  }
+  @media (max-width: 1023px) {
     .map-hint {
       font-size: 2rem;
     }
   }
-  .participants {
-    font-size: 0.875rem;
+  @media (max-width: 767px) {
+    .map-hint {
+      font-size: 1.5rem;
+      letter-spacing: 0.05em;
+    }
   }
   .guess {
     cursor: grab;
