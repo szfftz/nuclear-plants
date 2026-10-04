@@ -25,7 +25,7 @@
             <button class="my-button" type="button" @click="save">重試</button>
           </template>
         </div>
-        <!-- 不論是否揭曉都可以重設、確定；「看結果」一直顯示，送出過才能按 -->
+        <!-- 不論是否揭曉都可以重設、確定；「看大家點的位置」一直顯示，送出過才能按 -->
         <div class="my-buttons">
           <button class="my-button" type="button" :disabled="!guesses.length" @click="reset">重設</button>
           <button
@@ -36,7 +36,9 @@
           >
             確定
           </button>
-          <button class="my-button" type="button" :disabled="!submittedBefore" @click="router.push('/result')">看結果</button>
+          <button class="my-button result-button" type="button" :disabled="!submittedBefore" @click="router.push('/result')">
+            看大家點的位置
+          </button>
         </div>
         <div v-if="participants !== null" class="my-muted participants">目前有 {{ participants.toLocaleString() }} 人參與</div>
       </div>
@@ -233,6 +235,12 @@
     .map-hint {
       font-size: 1.5rem;
       letter-spacing: 0.05em;
+    }
+  }
+  /* 手機上按鈕平分寬度時，字比較多的這顆給兩倍寬 */
+  @media (max-width: 767px), (orientation: landscape) and (max-height: 560px) {
+    .my-buttons > .result-button {
+      flex-grow: 2;
     }
   }
   .guess {
