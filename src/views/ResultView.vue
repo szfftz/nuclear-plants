@@ -31,17 +31,13 @@
                   />
                 </template>
                 <NuclearMarker v-else-if="layer.key === 'actual'" color="var(--my-color-dark-gray)" :r="10" />
-                <rect
+                <circle
                   v-else
-                  class="my-badge"
-                  x="-12"
-                  y="-8"
-                  width="24"
-                  height="16"
-                  rx="8"
+                  class="mine-dot"
+                  r="6"
                   fill="var(--my-color-dark-gray)"
-                  stroke="#fff"
-                  stroke-width="3"
+                  stroke="#facc15"
+                  stroke-width="2.5"
                 />
               </svg>
               <span>{{ layer.label }}</span>
@@ -73,6 +69,7 @@
             </button>
           </div>
         </div>
+        <div v-if="!loading" class="my-muted participants">目前有 {{ submissions.length.toLocaleString() }} 人參與</div>
       </div>
     </aside>
 
@@ -95,24 +92,30 @@
             </template>
           </g>
 
-          <!-- 你放的位置 -->
-          <g v-if="mine && show.mine">
-            <PlantBadge
-              v-for="plant in visiblePlants"
-              :key="`mine-${plant.id}`"
-              :plant="plant"
-              :at="project(mine.guesses[plant.id - 1])"
-            />
-          </g>
-
           <!-- 實際位置 -->
           <g v-if="show.actual">
             <g v-for="plant in visiblePlants" :key="`actual-${plant.id}`" :transform="`translate(${project(plantPosition(plant))})`">
               <NuclearMarker :color="plant.color" :r="12" />
             </g>
           </g>
+
+          <!-- 你放的位置：跟大家一樣是圓點，但用黃圈＋陰影，疊在最上面 -->
+          <g v-if="mine && show.mine" class="mine-dots">
+            <circle
+              v-for="plant in visiblePlants"
+              :key="`mine-${plant.id}`"
+              :transform="`translate(${project(mine.guesses[plant.id - 1])})`"
+              r="6"
+              :fill="plant.color"
+              stroke="#facc15"
+              stroke-width="2.5"
+            />
+          </g>
         </template>
-        <template v-if="!loading" #note>目前有 {{ submissions.length.toLocaleString() }} 人參與</template>
+        <!-- 手機：人數放在「顯示全台」下面 -->
+        <template v-if="!loading" #note>
+          <span class="participants-map">目前有 {{ submissions.length.toLocaleString() }} 人參與</span>
+        </template>
       </TaiwanMap>
     </main>
 
@@ -126,7 +129,6 @@
   import { useRouter } from 'vue-router';
   import TaiwanMap from '../components/TaiwanMap.vue';
   import NuclearMarker from '../components/NuclearMarker.vue';
-  import PlantBadge from '../components/PlantBadge.vue';
   import { PLANTS, plantPosition } from '../config/plants.js';
   import { fetchSubmissions, getCookieId, getLocalAnswer } from '../services/answers.js';
 
@@ -294,6 +296,28 @@
   .filter .filter-all:hover:not(:disabled) {
     background-color: var(--my-color-dark-gray);
     color: #fff;
+  }
+
+  /* 你放的點：陰影讓它浮在其他點上面 */
+  .mine-dots circle,
+  .mine-dot {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+  }
+
+  /* 參與人數：桌機在「全部」下面，手機在地圖「顯示全台」下面 */
+  .participants {
+    margin-top: 12px;
+  }
+  .participants-map {
+    display: none;
+  }
+  @media (max-width: 767px) {
+    .participants {
+      display: none;
+    }
+    .participants-map {
+      display: inline;
+    }
   }
 
   /* 回到前頁：純文字連結樣式，不要按鈕外框 */

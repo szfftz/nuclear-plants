@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from './views/HomeView.vue';
 import ResultView from './views/ResultView.vue';
-import { checkUploaded } from './services/answers.js';
+import { checkUploaded, isLocalhost } from './services/answers.js';
 
 // 用 hash 路由，靜態主機（GitHub Pages）不用處理 404 轉址
 export default createRouter({
@@ -12,8 +12,8 @@ export default createRouter({
       path: '/result',
       name: 'Result',
       component: ResultView,
-      // 資料進過資料庫才能看大家的結果
-      beforeEnter: async () => ((await checkUploaded()) ? true : { path: '/' }),
+      // 資料進過資料庫才能看大家的結果（本機不擋）
+      beforeEnter: async () => (isLocalhost || (await checkUploaded()) ? true : { path: '/' }),
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

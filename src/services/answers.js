@@ -18,6 +18,9 @@ export const getCookieId = () => {
 
 const setSubmittedCookie = (uploaded) => cookie.set('submitted', uploaded ? '1' : '0');
 
+// 本機開發：不寫資料庫，也不用送出就能看結果
+export const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
+
 // 「有送出」＝資料庫裡已經有這個 cookie_id 的資料。cookie 只當快取，真正以資料庫為準
 export const hasSubmitted = () => cookie.get('submitted') === '1';
 
@@ -45,9 +48,11 @@ const rowsToGuesses = (rows) => {
  * 送出作答（guesses：[[lon, lat] x 4]，依核一～核四排序）
  * - 資料庫還沒有這個人 → 寫入四列，回傳 'uploaded'
  * - 已經有了           → 只存 localStorage，回傳 'local'
+ * - 本機開發           → 不寫資料庫，只存 localStorage，回傳 'local'
  */
 export const submitAnswer = async (guesses) => {
   local.set('answer', { guesses, update_at: new Date().toISOString() });
+  if (isLocalhost) return 'local';
 
   if (await checkUploaded()) return 'local';
 

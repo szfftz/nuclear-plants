@@ -25,7 +25,7 @@
             <button class="my-button" type="button" @click="save">重試</button>
           </template>
         </div>
-        <!-- 不論是否揭曉都可以重設、確定；「看大家點的位置」一直顯示，送出過才能按 -->
+        <!-- 不論是否揭曉都可以重設、確定；「看大家點的位置」一直顯示，送出過才能按（本機一律可按） -->
         <div class="my-buttons">
           <button class="my-button" type="button" :disabled="!guesses.length" @click="reset">重設</button>
           <button
@@ -36,7 +36,7 @@
           >
             確定
           </button>
-          <button class="my-button result-button" type="button" :disabled="!submittedBefore" @click="router.push('/result')">
+          <button class="my-button result-button" type="button" :disabled="!submittedBefore && !isLocalhost" @click="router.push('/result')">
             看大家點的位置
           </button>
         </div>
@@ -96,6 +96,10 @@
             @pointercancel="dragging = null"
           />
         </template>
+        <!-- 手機：人數放在「顯示全台」下面 -->
+        <template v-if="participants !== null" #note>
+          <span class="participants-map">目前有 {{ participants.toLocaleString() }} 人參與</span>
+        </template>
       </TaiwanMap>
     </main>
   </div>
@@ -109,7 +113,7 @@
   import PlantBadge from '../components/PlantBadge.vue';
   import { PLANTS, plantPosition } from '../config/plants.js';
   import { distanceKm, formatKm, lineAttrs, midpoint } from '../lib/geo.js';
-  import { submitAnswer, hasSubmitted, checkUploaded, fetchMyAnswer, fetchParticipantCount } from '../services/answers.js';
+  import { submitAnswer, hasSubmitted, isLocalhost, checkUploaded, fetchMyAnswer, fetchParticipantCount } from '../services/answers.js';
   import { trackEvent } from '../lib/analytics.js';
 
   const router = useRouter();
@@ -229,6 +233,18 @@
     .map-hint {
       font-size: 1.5rem;
       letter-spacing: 0.05em;
+    }
+  }
+  /* 參與人數：桌機在按鈕下面，手機在地圖「顯示全台」下面 */
+  .participants-map {
+    display: none;
+  }
+  @media (max-width: 767px) {
+    .participants {
+      display: none;
+    }
+    .participants-map {
+      display: inline;
     }
   }
   /* 手機上按鈕平分寬度時，字比較多的這顆給兩倍寬 */
