@@ -106,10 +106,3 @@ export const fetchMyAnswer = async () => {
   if (error || !data) return null;
   return rowsToGuesses(data);
 };
-
-// 參與人數：每人上傳四列（核一～核四）
-export const fetchParticipantCount = async () => {
-  const { count, error } = await supabase.from(TABLE).select('id', { count: 'exact', head: true });
-  if (error) throw new Error(error.message);
-  return Math.floor((count ?? 0) / PLANTS.length);
-};

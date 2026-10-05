@@ -40,7 +40,6 @@
             看大家點的位置
           </button>
         </div>
-        <div v-if="participants !== null" class="my-muted participants">目前有 {{ participants.toLocaleString() }} 人參與</div>
       </div>
     </aside>
 
@@ -96,10 +95,6 @@
             @pointercancel="dragging = null"
           />
         </template>
-        <!-- 手機：人數放在「顯示全台」下面 -->
-        <template v-if="participants !== null" #note>
-          <span class="participants-map">目前有 {{ participants.toLocaleString() }} 人參與</span>
-        </template>
       </TaiwanMap>
     </main>
   </div>
@@ -113,7 +108,7 @@
   import PlantBadge from '../components/PlantBadge.vue';
   import { PLANTS, plantPosition } from '../config/plants.js';
   import { distanceKm, formatKm, lineAttrs, midpoint } from '../lib/geo.js';
-  import { submitAnswer, hasSubmitted, isLocalhost, checkUploaded, fetchMyAnswer, fetchParticipantCount } from '../services/answers.js';
+  import { submitAnswer, hasSubmitted, isLocalhost, checkUploaded, fetchMyAnswer } from '../services/answers.js';
   import { trackEvent } from '../lib/analytics.js';
 
   const router = useRouter();
@@ -123,17 +118,7 @@
   const saveState = ref('idle');
   const saveError = ref('');
   const submittedBefore = ref(hasSubmitted());
-  const participants = ref(null);
-
-  const loadParticipants = async () => {
-    try {
-      participants.value = await fetchParticipantCount();
-    } catch {
-      // 讀不到就不顯示人數
-    }
-  };
   onMounted(async () => {
-    loadParticipants();
     // 以資料庫為準更新「有沒有送出過」；送出過就帶出上次的作答，可以直接重設、確定
     submittedBefore.value = await checkUploaded();
     if (submittedBefore.value && !guesses.value.length) {
@@ -183,7 +168,6 @@
       saveState.value = await submitAnswer(guesses.value);
       submittedBefore.value = true; // uploaded 或 local 都代表資料庫裡已經有了
       trackEvent('submit_answer', { result: saveState.value, average_km: Math.round(averageKm.value) });
-      if (saveState.value === 'uploaded') loadParticipants();
     } catch (e) {
       saveError.value = e.message;
       saveState.value = 'error';
@@ -233,18 +217,6 @@
     .map-hint {
       font-size: 1.5rem;
       letter-spacing: 0.05em;
-    }
-  }
-  /* 參與人數：桌機在按鈕下面，手機在地圖「顯示全台」下面 */
-  .participants-map {
-    display: none;
-  }
-  @media (max-width: 767px) {
-    .participants {
-      display: none;
-    }
-    .participants-map {
-      display: inline;
     }
   }
   /* 手機上按鈕平分寬度時，字比較多的這顆給兩倍寬 */
