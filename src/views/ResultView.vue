@@ -139,7 +139,7 @@
   const selected = ref(null);
 
   // 地圖圖層開關
-  const show = reactive({ crowd: true, actual: true, mine: true });
+  const show = reactive({ crowd: true, actual: true, mine: false });
 
   // 你的點用這台裝置最新一次作答（第一次之後的改動只存在 localStorage）；沒有的話用你上傳的那筆
   const myUpload = computed(() => submissions.value.find((s) => s.cookieId === getCookieId()) ?? null);
