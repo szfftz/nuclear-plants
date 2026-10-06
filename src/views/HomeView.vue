@@ -47,13 +47,16 @@
       <TaiwanMap @pick="addGuess">
         <!-- 地圖正中央的浮水印（在陸地上、點和標籤下）：所有提示都在這裡；點核一～核四時都附上「地圖可縮放位移」 -->
         <template #watermark="{ center }">
+          <!-- 兩行時整組上下置中：主行往上半行距、副行往下 -->
           <text class="map-hint" :x="center[0]" :y="center[1]" aria-live="polite">
-            <template v-if="revealed">平均差了 {{ formatKm(averageKm) }} 公里</template>
-            <template v-else-if="nextPlant">
-              在地圖上點出 <tspan :fill="nextPlant.color">{{ nextPlant.label }}</tspan> 的位置
-            </template>
-            <template v-else>四個點都放好了</template>
-            <tspan v-if="!revealed" class="map-hint-sub" :x="center[0]" dy="1.8em">
+            <tspan :x="center[0]" :dy="revealed ? 0 : '-0.75em'">
+              <template v-if="revealed">平均差了 {{ formatKm(averageKm) }} 公里</template>
+              <template v-else-if="nextPlant">
+                在地圖上點出 <tspan :fill="nextPlant.color">{{ nextPlant.label }}</tspan> 的位置
+              </template>
+              <template v-else>四個點都放好了</template>
+            </tspan>
+            <tspan v-if="!revealed" class="map-hint-sub" :x="center[0]" dy="2.5em">
               {{ nextPlant ? '地圖可縮放位移' : '可以拖曳調整位置' }}
             </tspan>
           </text>
